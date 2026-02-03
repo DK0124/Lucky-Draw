@@ -1367,7 +1367,7 @@
       // Prize Management Functions
       // ---------------------------
       function generatePrizeId(){
-        return 'p' + Date.now() + Math.random().toString(36).substr(2, 9);
+        return 'p' + Date.now() + Math.random().toString(36).slice(2, 11);
       }
       
       function addPrize(name, total, description){
@@ -1531,7 +1531,8 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `抽獎設定_${new Date().toISOString().split('T')[0]}.json`;
+        const date = new Date().toISOString().split('T')[0];
+        a.download = `lucky-draw-config_${date}.json`;
         a.click();
         URL.revokeObjectURL(url);
       }
@@ -1554,6 +1555,10 @@
             for(const p of data.prizes){
               if(!p.id || !p.name || typeof p.total !== 'number' || typeof p.remaining !== 'number'){
                 alert('無效的檔案格式：獎項資料不完整');
+                return;
+              }
+              if(typeof p.order !== 'number'){
+                alert('無效的檔案格式：獎項缺少 order 欄位');
                 return;
               }
             }
@@ -3296,10 +3301,14 @@
       // Add surprise (increment)
       // ---------------------------
       function addSurpriseOne(){
-        let sp = state.prizes.find(p=>p.name.includes("加碼驚喜") || p.name.includes("加碼"));
+        // Look for existing surprise prize by checking if it was previously added as surprise
+        // or if its name contains the surprise keyword (for backwards compatibility)
+        let sp = state.prizes.find(p => p.isSurprise || p.name.includes("加碼驚喜") || p.name.includes("加碼"));
+        
         if(sp){
           sp.total += 1;
           sp.remaining += 1;
+          sp.isSurprise = true; // Mark it for future reference
         }else{
           // Create new surprise prize
           const maxOrder = state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0);
@@ -3309,7 +3318,8 @@
             description: "",
             total: 1,
             remaining: 1,
-            order: maxOrder + 1
+            order: maxOrder + 1,
+            isSurprise: true
           };
           state.prizes.push(sp);
         }
