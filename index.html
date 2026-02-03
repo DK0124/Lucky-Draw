@@ -462,6 +462,7 @@
     }
     select{ cursor:pointer; }
     .hidden{ display:none; }
+    .disabled{ opacity:0.4; cursor:not-allowed; }
     .mini{
       font-size: clamp(14px, 0.95vw, 18px);
       color: rgba(255,255,255,.64);
@@ -1373,7 +1374,7 @@
         // Use timestamp + counter + random for uniqueness even within same millisecond
         prizeIdCounter = (prizeIdCounter + 1) % 10000;
         const timestamp = Date.now();
-        const random = Math.random().toString(36).slice(2, 11).padEnd(9, '0');
+        const random = Math.random().toString(36).slice(2).padEnd(9, '0').slice(0, 9);
         return `p${timestamp}_${prizeIdCounter}_${random}`;
       }
       
@@ -1661,14 +1662,14 @@
           upBtn.textContent = "↑";
           upBtn.disabled = idx === 0;
           upBtn.onclick = () => movePrizeUp(p.id);
-          if(idx === 0) upBtn.style.opacity = "0.4";
+          if(idx === 0) upBtn.classList.add('disabled');
           
           const downBtn = document.createElement("button");
           downBtn.className = "actionBtn";
           downBtn.textContent = "↓";
           downBtn.disabled = idx === state.prizes.length - 1;
           downBtn.onclick = () => movePrizeDown(p.id);
-          if(idx === state.prizes.length - 1) downBtn.style.opacity = "0.4";
+          if(idx === state.prizes.length - 1) downBtn.classList.add('disabled');
           
           actions.appendChild(editBtn);
           actions.appendChild(deleteBtn);
@@ -1794,7 +1795,11 @@
         ui.participantsInput.value = String(state.participantsN);
         ui.eventTitle.textContent = state.eventName;
         ui.eventSubtitle.textContent = state.eventSubtitle;
-        ui.eventSubtitle.style.display = state.eventSubtitle ? 'inline' : 'none';
+        if(state.eventSubtitle){
+          ui.eventSubtitle.classList.remove('hidden');
+        }else{
+          ui.eventSubtitle.classList.add('hidden');
+        }
         renderPrizeList();
         renderHistory();
         renderWinnerList();
@@ -3318,8 +3323,10 @@
         // Look for existing surprise prize marked with isSurprise flag
         let sp = state.prizes.find(p => p.isSurprise);
         
-        // Fallback: For backwards compatibility with existing data,
-        // also check for Chinese text "加碼" in name. This is temporary migration logic.
+        // Fallback: For backwards compatibility with existing data from before isSurprise flag.
+        // This checks Chinese text "加碼" in name for migration purposes.
+        // TODO: This migration support can be removed after a grace period (e.g., 6 months)
+        // once all existing users have upgraded and their data has been migrated.
         if(!sp){
           sp = state.prizes.find(p => p.name && (p.name.includes("加碼驚喜") || p.name.includes("加碼")));
           if(sp){
