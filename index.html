@@ -414,7 +414,7 @@
     .adminGrid{
       height: calc(100% - 80px);
       display:grid;
-      grid-template-columns: 1.0fr 1.25fr 1.0fr;
+      grid-template-columns: 1fr 1.2fr 1fr;
       gap:16px;
       padding:16px;
     }
@@ -443,8 +443,9 @@
     label{
       font-size: clamp(14px, 0.95vw, 18px);
       color: rgba(255,255,255,.78);
+      margin:0;
     }
-    input[type="number"], select{
+    input[type="number"], input[type="text"], select, textarea{
       width:100%;
       padding:14px 14px;
       border-radius: 14px;
@@ -453,8 +454,15 @@
       color: rgba(255,255,255,.96);
       font-size: clamp(16px, 1.15vw, 22px);
       outline:none;
+      font-family: inherit;
+    }
+    textarea{
+      resize: vertical;
+      min-height: 50px;
     }
     select{ cursor:pointer; }
+    .hidden{ display:none; }
+    .disabled{ opacity:0.4; cursor:not-allowed; }
     .mini{
       font-size: clamp(14px, 0.95vw, 18px);
       color: rgba(255,255,255,.64);
@@ -485,35 +493,118 @@
       border:1px solid rgba(255,120,120,.25);
     }
     .btnSmall:active{ transform: translateY(1px) scale(.99); }
+    
+    .btnTiny{
+      appearance:none;
+      border:none;
+      border-radius: 10px;
+      padding:6px 10px;
+      font-size: clamp(13px, 0.95vw, 16px);
+      font-weight:800;
+      cursor:pointer;
+      color:#1a0808;
+      background: linear-gradient(180deg, var(--gold-primary), var(--gold-accent));
+      transition: transform .08s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btnTiny.secondary{
+      background: rgba(139,26,31,.35);
+      color: rgba(255,255,255,.96);
+      border:1px solid rgba(255,215,0,.28);
+    }
+    .btnTiny:active{ transform: translateY(1px) scale(.99); }
+
+    .prizeForm{
+      padding:12px;
+      border-radius: 16px;
+      background: rgba(0,0,0,.15);
+      border:1px solid rgba(255,215,0,.12);
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    
+    .prizeListSection{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      flex:1;
+      min-height:0;
+    }
 
     .prizeList{
       overflow:auto;
       padding-right:6px;
+      flex:1;
+      min-height:0;
     }
     .prizeItem{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:14px 14px;
-      border-radius: 16px;
+      flex-direction:column;
+      gap:8px;
+      padding:12px;
+      border-radius: 14px;
       border:1px solid rgba(255,255,255,.07);
       background: rgba(0,0,0,.18);
-      margin-bottom:10px;
+      margin-bottom:8px;
     }
     .prizeItem.active{
       border-color: rgba(255,215,0,.45);
       background: rgba(255,215,0,.15);
     }
+    .prizeItem .prizeHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
     .prizeItem .n{
       font-size: clamp(16px, 1.15vw, 22px);
       font-weight:1000;
       color: rgba(255,255,255,.94);
+      flex:1;
     }
     .prizeItem .c{
       font-size: clamp(15px, 1.05vw, 20px);
       color: rgba(255,255,255,.70);
       white-space:nowrap;
+    }
+    .prizeItem .desc{
+      font-size: clamp(14px, 0.95vw, 18px);
+      color: rgba(255,255,255,.65);
+      font-style: italic;
+    }
+    .prizeItem .actions{
+      display:flex;
+      gap:6px;
+      flex-wrap:wrap;
+    }
+    .prizeItem .actionBtn{
+      appearance:none;
+      border:none;
+      border-radius: 8px;
+      padding:4px 8px;
+      font-size: clamp(12px, 0.85vw, 15px);
+      font-weight:700;
+      cursor:pointer;
+      color: rgba(255,255,255,.90);
+      background: rgba(139,26,31,.30);
+      border:1px solid rgba(255,215,0,.20);
+      transition: all .08s ease;
+      user-select:none;
+    }
+    .prizeItem .actionBtn:hover{
+      background: rgba(139,26,31,.45);
+      border-color: rgba(255,215,0,.35);
+    }
+    .prizeItem .actionBtn:active{ transform: scale(.96); }
+    .prizeItem .actionBtn.danger{
+      background: rgba(255,80,80,.10);
+      border-color: rgba(255,120,120,.20);
+    }
+    .prizeItem .actionBtn.danger:hover{
+      background: rgba(255,80,80,.20);
     }
 
     .history{
@@ -787,8 +878,9 @@
     <div id="stage" role="application" aria-label="尾牙抽獎器舞台">
       <div class="topbar">
         <div class="title">
-          <div class="main">2026 尾牙抽獎</div>
+          <div class="main"><span id="eventTitle">抽獎活動</span></div>
           <div class="sub">
+            <span id="eventSubtitle"></span>
             <span class="keyHint"><span class="kbd">A</span>管理面板</span>
           </div>
         </div>
@@ -837,18 +929,20 @@
         </div>
 
         <div class="adminGrid">
+          <!-- LEFT COLUMN: Event Settings -->
           <div class="card">
-            <h3>參加人數</h3>
-            <label for="participantsInput">N（將生成 1..N）</label>
+            <h3>活動設定</h3>
+            <label for="eventNameInput">活動名稱</label>
+            <input id="eventNameInput" type="text" placeholder="例：2026 尾牙抽獎" />
+            
+            <label for="eventSubtitleInput">活動副標題（選填）</label>
+            <input id="eventSubtitleInput" type="text" placeholder="例：春節特別活動" />
+            
+            <label for="participantsInput">參加人數（1..N）</label>
             <input id="participantsInput" type="number" min="1" step="1" inputmode="numeric" />
-            <div class="row">
-              <button id="applyParticipants" class="btnSmall">套用並重置</button>
-              <button id="resetAll" class="btnSmall danger">全部重置</button>
-            </div>
-            <div class="mini">
-              - 套用會清空「已抽出」與「獎項進度」，重新開始。<br/>
-              - 若抽獎池人數為 0，將無法抽獎。
-            </div>
+            
+            <button id="applySettings" class="btnSmall">套用設定</button>
+            <div class="mini">套用會清空「已抽出」與「獎項進度」，重新開始。</div>
 
             <h3 style="margin-top:10px;">動畫與音效</h3>
             <label for="modeSelect">動畫模式</label>
@@ -866,26 +960,52 @@
                 <span style="font-size:20px;">音效</span>
               </label>
             </div>
-            <div class="mini">音效使用內建 WebAudio（無需外部檔案）。</div>
           </div>
 
+          <!-- MIDDLE COLUMN: Prize Management -->
           <div class="card">
-            <h3>固定獎項（依序一名一名抽）</h3>
-            <div class="prizeList" id="prizeList"></div>
-            <div class="row">
-              <button id="addSurprise" class="btnSmall secondary">＋加碼驚喜（1名）</button>
-              <button id="redrawLast" class="btnSmall secondary">重抽上一位</button>
+            <h3>獎項管理</h3>
+            
+            <div class="prizeForm">
+              <label for="prizeNameInput">獎項名稱 *</label>
+              <input id="prizeNameInput" type="text" placeholder="例：精美文具組" />
+              
+              <label for="prizeQuantityInput">數量 *</label>
+              <input id="prizeQuantityInput" type="number" min="1" step="1" value="1" />
+              
+              <label for="prizeDescInput">說明（選填）</label>
+              <textarea id="prizeDescInput" rows="2" placeholder="例：包含筆記本、鋼筆等"></textarea>
+              
+              <button id="addPrizeBtn" class="btnSmall">新增獎項</button>
+              <button id="updatePrizeBtn" class="btnSmall hidden">更新獎項</button>
+              <button id="cancelEditBtn" class="btnSmall secondary hidden">取消編輯</button>
             </div>
-            <div class="mini">
-              - 重抽：允許把同號加回抽獎池，再抽一次。<br/>
-              - 加碼：每按一次追加 1 名「加碼驚喜」。
+
+            <div class="prizeListSection">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                <label style="margin:0;">獎項列表</label>
+                <div class="row" style="gap:6px;">
+                  <button id="addSurprise" class="btnTiny secondary">＋加碼</button>
+                  <button id="redrawLast" class="btnTiny secondary">重抽</button>
+                </div>
+              </div>
+              <div class="prizeList" id="prizeList"></div>
+              <button id="clearAllPrizes" class="btnSmall danger" style="margin-top:8px;">清空所有獎項</button>
             </div>
           </div>
 
+          <!-- RIGHT COLUMN: History & Import/Export -->
           <div class="card">
             <h3>已抽出紀錄</h3>
-            <div class="mini">（只在管理面板顯示；舞台畫面保持乾淨）</div>
+            <div class="mini">（只在管理面板顯示）</div>
             <div class="history" id="history"></div>
+
+            <h3 style="margin-top:10px;">匯入/匯出</h3>
+            <button id="exportBtn" class="btnSmall secondary">匯出設定 JSON</button>
+            <button id="importBtn" class="btnSmall secondary">匯入設定 JSON</button>
+            <input id="importFile" type="file" accept=".json" style="display:none;" />
+            <button id="resetAll" class="btnSmall danger" style="margin-top:8px;">重置所有資料</button>
+            <div class="mini">重置會清除 localStorage 並還原預設值。</div>
           </div>
         </div>
       </div>
@@ -964,6 +1084,8 @@
       // UI elements
       // ---------------------------
       const ui = {
+        eventTitle: document.getElementById("eventTitle"),
+        eventSubtitle: document.getElementById("eventSubtitle"),
         prizeName: document.getElementById("prizeName"),
         prizeProgress: document.getElementById("prizeProgress"),
         statPool: document.getElementById("statPool"),
@@ -974,15 +1096,27 @@
         btnDraw: document.getElementById("btnDraw"),
         btnFullscreen: document.getElementById("btnFullscreen"),
         admin: document.getElementById("admin"),
+        eventNameInput: document.getElementById("eventNameInput"),
+        eventSubtitleInput: document.getElementById("eventSubtitleInput"),
         participantsInput: document.getElementById("participantsInput"),
-        applyParticipants: document.getElementById("applyParticipants"),
+        applySettings: document.getElementById("applySettings"),
         resetAll: document.getElementById("resetAll"),
         modeSelect: document.getElementById("modeSelect"),
         soundToggle: document.getElementById("soundToggle"),
+        prizeNameInput: document.getElementById("prizeNameInput"),
+        prizeQuantityInput: document.getElementById("prizeQuantityInput"),
+        prizeDescInput: document.getElementById("prizeDescInput"),
+        addPrizeBtn: document.getElementById("addPrizeBtn"),
+        updatePrizeBtn: document.getElementById("updatePrizeBtn"),
+        cancelEditBtn: document.getElementById("cancelEditBtn"),
         prizeList: document.getElementById("prizeList"),
+        clearAllPrizes: document.getElementById("clearAllPrizes"),
         addSurprise: document.getElementById("addSurprise"),
         redrawLast: document.getElementById("redrawLast"),
         history: document.getElementById("history"),
+        exportBtn: document.getElementById("exportBtn"),
+        importBtn: document.getElementById("importBtn"),
+        importFile: document.getElementById("importFile"),
         prizeIntro: document.getElementById("prizeIntro"),
         introTitle: document.getElementById("introTitle"),
         introProgress: document.getElementById("introProgress"),
@@ -1121,18 +1255,59 @@
       // ---------------------------
       function buildDefaultPrizes(){
         return [
-          { key:"powerbank", name:"行動電源", total:3, remaining:3 },
-          { key:"airfryer",  name:"氣炸鍋",   total:2, remaining:2 },
-          { key:"second",   name:"貳獎 AirPods Pro", total:1, remaining:1 },
-          { key:"grand",    name:"大獎 iPad", total:1, remaining:1 },
-          { key:"surprise", name:"加碼驚喜", total:4, remaining:4 },
+          { id:"p1", name:"精美文具組", description:"包含筆記本、鋼筆等", total:5, remaining:5, order:1 },
+          { id:"p2", name:"藍牙耳機", description:"", total:3, remaining:3, order:2 },
+          { id:"p3", name:"智慧手環", description:"運動追蹤功能", total:2, remaining:2, order:3 },
+          { id:"p4", name:"大獎 平板電腦", description:"10吋高解析螢幕", total:1, remaining:1, order:4 },
         ];
+      }
+
+      // ---------------------------
+      // LocalStorage helpers
+      // ---------------------------
+      const STORAGE_KEY = 'luckyDrawData';
+      
+      function saveToStorage(){
+        const data = {
+          eventName: state.eventName,
+          eventSubtitle: state.eventSubtitle,
+          participantsN: state.participantsN,
+          prizes: state.prizes,
+          history: state.history,
+          currentPrizeIndex: state.currentPrizeIndex
+        };
+        try{
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }catch(e){
+          console.warn('Failed to save to localStorage:', e);
+        }
+      }
+      
+      function loadFromStorage(){
+        try{
+          const json = localStorage.getItem(STORAGE_KEY);
+          if(json){
+            const data = JSON.parse(json);
+            state.eventName = data.eventName || "抽獎活動";
+            state.eventSubtitle = data.eventSubtitle || "";
+            state.participantsN = data.participantsN || 20;
+            state.prizes = data.prizes || buildDefaultPrizes();
+            state.history = data.history || [];
+            state.currentPrizeIndex = data.currentPrizeIndex || 0;
+            return true;
+          }
+        }catch(e){
+          console.warn('Failed to load from localStorage:', e);
+        }
+        return false;
       }
 
       // ---------------------------
       // State
       // ---------------------------
       const state = {
+        eventName: "抽獎活動",
+        eventSubtitle: "",
         participantsN: 20,
         candidates: [],
         prizes: buildDefaultPrizes(),
@@ -1142,6 +1317,7 @@
         phase: 'idle', // 'idle' | 'prizeIntro' | 'rolling' | 'result'
         lastMode: null,
         modeIndex: 0,
+        editingPrizeId: null,
       };
 
       function rebuildCandidates(){
@@ -1151,13 +1327,22 @@
       }
 
       function resetAll(){
-        state.prizes = buildDefaultPrizes();
+        if(loadFromStorage()){
+          // Loaded from storage successfully
+        }else{
+          // Use defaults
+          state.eventName = "抽獎活動";
+          state.eventSubtitle = "";
+          state.prizes = buildDefaultPrizes();
+          state.participantsN = 20;
+        }
         state.currentPrizeIndex = 0;
         state.history = [];
         rebuildCandidates();
         ui.winnerBig.textContent = "準備抽獎";
         ui.winnerSmall.textContent = "";
         renderAll();
+        saveToStorage();
       }
 
       function totalRemainingPrizes(){
@@ -1179,6 +1364,246 @@
       function prizeDrawNo(prize){
         return (prize.total - prize.remaining) + 1;
       }
+      
+      // ---------------------------
+      // Prize Management Functions
+      // ---------------------------
+      let prizeIdCounter = 0;
+      
+      function generatePrizeId(){
+        // Use timestamp + counter + random for uniqueness
+        // - timestamp: milliseconds precision
+        // - counter: cycles 0-9999 for same-millisecond calls
+        // - random: base36 random, padded to exactly 9 chars
+        // Combined: virtually impossible to have collisions
+        prizeIdCounter = (prizeIdCounter + 1) % 10000;
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).slice(2).padEnd(9, '0').slice(0, 9);
+        return `p${timestamp}_${prizeIdCounter}_${random}`;
+      }
+      
+      function addPrize(name, total, description){
+        if(!name || !name.trim()){
+          alert('請輸入獎項名稱');
+          return false;
+        }
+        if(!total || total < 1){
+          alert('數量必須至少為 1');
+          return false;
+        }
+        
+        const maxOrder = state.prizes.length > 0
+          ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
+          : 0;
+        
+        const newPrize = {
+          id: generatePrizeId(),
+          name: name.trim(),
+          description: (description || "").trim(),
+          total: parseInt(total),
+          remaining: parseInt(total),
+          order: maxOrder + 1
+        };
+        
+        state.prizes.push(newPrize);
+        saveToStorage();
+        renderPrizeList();
+        return true;
+      }
+      
+      function editPrize(id, name, total, description){
+        if(!name || !name.trim()){
+          alert('請輸入獎項名稱');
+          return false;
+        }
+        if(!total || total < 1){
+          alert('數量必須至少為 1');
+          return false;
+        }
+        
+        const prize = state.prizes.find(p => p.id === id);
+        if(!prize){
+          alert('找不到該獎項');
+          return false;
+        }
+        
+        const drawn = prize.total - prize.remaining;
+        const newTotal = parseInt(total);
+        
+        if(newTotal < drawn){
+          alert(`此獎項已抽出 ${drawn} 名，總數不能少於已抽出數量`);
+          return false;
+        }
+        
+        prize.name = name.trim();
+        prize.description = (description || "").trim();
+        prize.total = newTotal;
+        prize.remaining = newTotal - drawn;
+        
+        saveToStorage();
+        renderPrizeList();
+        return true;
+      }
+      
+      function deletePrize(id){
+        const prize = state.prizes.find(p => p.id === id);
+        if(!prize) return;
+        
+        const drawn = prize.total - prize.remaining;
+        if(drawn > 0){
+          if(!confirm(`「${prize.name}」已抽出 ${drawn} 名，確定要刪除嗎？\n\n注意：已抽出的紀錄仍會保留，但該獎項資訊將無法在紀錄中顯示。`)){
+            return;
+          }
+        }else{
+          if(!confirm(`確定要刪除「${prize.name}」嗎？`)){
+            return;
+          }
+        }
+        
+        state.prizes = state.prizes.filter(p => p.id !== id);
+        
+        // Note: Historical records with this prizeId will remain but show as orphaned
+        // This is intentional to preserve draw history integrity
+        
+        saveToStorage();
+        renderPrizeList();
+      }
+      
+      function movePrizeUp(id){
+        const idx = state.prizes.findIndex(p => p.id === id);
+        if(idx <= 0) return;
+        
+        const temp = state.prizes[idx];
+        state.prizes[idx] = state.prizes[idx-1];
+        state.prizes[idx-1] = temp;
+        
+        // Update order values
+        state.prizes.forEach((p, i) => p.order = i + 1);
+        
+        saveToStorage();
+        renderPrizeList();
+      }
+      
+      function movePrizeDown(id){
+        const idx = state.prizes.findIndex(p => p.id === id);
+        if(idx < 0 || idx >= state.prizes.length - 1) return;
+        
+        const temp = state.prizes[idx];
+        state.prizes[idx] = state.prizes[idx+1];
+        state.prizes[idx+1] = temp;
+        
+        // Update order values
+        state.prizes.forEach((p, i) => p.order = i + 1);
+        
+        saveToStorage();
+        renderPrizeList();
+      }
+      
+      function clearAllPrizes(){
+        if(!confirm('確定要清空所有獎項嗎？\n此操作無法復原。')){
+          return;
+        }
+        
+        state.prizes = [];
+        state.currentPrizeIndex = 0;
+        saveToStorage();
+        renderPrizeList();
+      }
+      
+      function resetAllData(){
+        if(!confirm('確定要重置所有資料嗎？\n這將清除所有設定、獎項和歷史紀錄，並還原為預設值。\n此操作無法復原。')){
+          return;
+        }
+        
+        try{
+          localStorage.removeItem(STORAGE_KEY);
+        }catch(e){}
+        
+        state.eventName = "抽獎活動";
+        state.eventSubtitle = "";
+        state.participantsN = 20;
+        state.prizes = buildDefaultPrizes();
+        state.currentPrizeIndex = 0;
+        state.history = [];
+        rebuildCandidates();
+        
+        ui.winnerBig.textContent = "準備抽獎";
+        ui.winnerSmall.textContent = "";
+        
+        renderAll();
+        saveToStorage();
+      }
+      
+      // ---------------------------
+      // Import/Export Functions
+      // ---------------------------
+      function exportToJSON(){
+        const data = {
+          eventName: state.eventName,
+          eventSubtitle: state.eventSubtitle,
+          participantsN: state.participantsN,
+          prizes: state.prizes
+        };
+        
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const date = new Date().toISOString().split('T')[0];
+        a.download = `lucky-draw-config_${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+      
+      function importFromJSON(file){
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e){
+          try{
+            const data = JSON.parse(e.target.result);
+            
+            // Validate data structure
+            if(!data.prizes || !Array.isArray(data.prizes)){
+              alert('無效的檔案格式：缺少 prizes 陣列');
+              return;
+            }
+            
+            // Validate each prize
+            for(const p of data.prizes){
+              if(!p.id || !p.name || typeof p.total !== 'number' || typeof p.remaining !== 'number'){
+                alert('無效的檔案格式：獎項資料不完整');
+                return;
+              }
+              if(typeof p.order !== 'number'){
+                alert('無效的檔案格式：獎項缺少 order 欄位');
+                return;
+              }
+            }
+            
+            // Import data
+            state.eventName = data.eventName || "抽獎活動";
+            state.eventSubtitle = data.eventSubtitle || "";
+            state.participantsN = data.participantsN || 20;
+            state.prizes = data.prizes;
+            state.currentPrizeIndex = 0;
+            state.history = [];
+            
+            rebuildCandidates();
+            ui.winnerBig.textContent = "準備抽獎";
+            ui.winnerSmall.textContent = "";
+            
+            renderAll();
+            saveToStorage();
+            
+            alert('匯入成功！');
+          }catch(err){
+            alert('匯入失敗：' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      }
 
       // ---------------------------
       // Admin rendering
@@ -1186,19 +1611,108 @@
       function renderPrizeList(){
         const cur = getCurrentPrize();
         ui.prizeList.innerHTML = "";
+        
+        if(state.prizes.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "mini";
+          empty.style.textAlign = "center";
+          empty.style.padding = "20px";
+          empty.textContent = "尚無獎項，請新增";
+          ui.prizeList.appendChild(empty);
+          return;
+        }
+        
         state.prizes.forEach((p, idx)=>{
           const div = document.createElement("div");
-          div.className = "prizeItem" + (cur && cur.key===p.key && p.remaining>0 ? " active":"");
+          div.className = "prizeItem";
+          if(cur && cur.id===p.id && p.remaining>0){
+            div.classList.add("active");
+          }
+          
+          const header = document.createElement("div");
+          header.className = "prizeHeader";
+          
           const left = document.createElement("div");
           left.className = "n";
           left.textContent = p.name;
+          
           const right = document.createElement("div");
           right.className = "c";
-          right.textContent = `剩 ${p.remaining} / 共 ${p.total}`;
-          div.appendChild(left);
-          div.appendChild(right);
+          right.textContent = `${p.remaining} / ${p.total}`;
+          
+          header.appendChild(left);
+          header.appendChild(right);
+          div.appendChild(header);
+          
+          if(p.description){
+            const desc = document.createElement("div");
+            desc.className = "desc";
+            desc.textContent = p.description;
+            div.appendChild(desc);
+          }
+          
+          const actions = document.createElement("div");
+          actions.className = "actions";
+          
+          const editBtn = document.createElement("button");
+          editBtn.className = "actionBtn";
+          editBtn.textContent = "編輯";
+          editBtn.onclick = () => startEditPrize(p.id);
+          
+          const deleteBtn = document.createElement("button");
+          deleteBtn.className = "actionBtn danger";
+          deleteBtn.textContent = "刪除";
+          deleteBtn.onclick = () => deletePrize(p.id);
+          
+          const upBtn = document.createElement("button");
+          upBtn.className = "actionBtn";
+          upBtn.textContent = "↑";
+          upBtn.disabled = idx === 0;
+          upBtn.onclick = () => movePrizeUp(p.id);
+          if(idx === 0) upBtn.classList.add('disabled');
+          
+          const downBtn = document.createElement("button");
+          downBtn.className = "actionBtn";
+          downBtn.textContent = "↓";
+          downBtn.disabled = idx === state.prizes.length - 1;
+          downBtn.onclick = () => movePrizeDown(p.id);
+          if(idx === state.prizes.length - 1) downBtn.classList.add('disabled');
+          
+          actions.appendChild(editBtn);
+          actions.appendChild(deleteBtn);
+          actions.appendChild(upBtn);
+          actions.appendChild(downBtn);
+          
+          div.appendChild(actions);
           ui.prizeList.appendChild(div);
         });
+      }
+      
+      function startEditPrize(id){
+        const prize = state.prizes.find(p => p.id === id);
+        if(!prize) return;
+        
+        state.editingPrizeId = id;
+        ui.prizeNameInput.value = prize.name;
+        ui.prizeQuantityInput.value = prize.total;
+        ui.prizeDescInput.value = prize.description;
+        
+        ui.addPrizeBtn.classList.add('hidden');
+        ui.updatePrizeBtn.classList.remove('hidden');
+        ui.cancelEditBtn.classList.remove('hidden');
+        
+        ui.prizeNameInput.focus();
+      }
+      
+      function cancelEditPrize(){
+        state.editingPrizeId = null;
+        ui.prizeNameInput.value = '';
+        ui.prizeQuantityInput.value = '1';
+        ui.prizeDescInput.value = '';
+        
+        ui.addPrizeBtn.classList.remove('hidden');
+        ui.updatePrizeBtn.classList.add('hidden');
+        ui.cancelEditBtn.classList.add('hidden');
       }
 
       function renderHistory(){
@@ -1283,7 +1797,16 @@
       }
 
       function renderAll(){
+        ui.eventNameInput.value = state.eventName;
+        ui.eventSubtitleInput.value = state.eventSubtitle;
         ui.participantsInput.value = String(state.participantsN);
+        ui.eventTitle.textContent = state.eventName;
+        ui.eventSubtitle.textContent = state.eventSubtitle;
+        if(state.eventSubtitle){
+          ui.eventSubtitle.classList.remove('hidden');
+        }else{
+          ui.eventSubtitle.classList.add('hidden');
+        }
         renderPrizeList();
         renderHistory();
         renderWinnerList();
@@ -1334,12 +1857,12 @@
         const sel = ui.modeSelect.value;
         if(sel !== "auto") return sel;
         
-        // Special rule: grand and second prizes always use slot animation
-        if(prize && (prize.key === "grand" || prize.key === "second")){
+        // Special rule: low quantity prizes (1-2) use slot animation for drama
+        if(prize && prize.total <= 2){
           return "slot";
         }
         
-        // Sequential rotation through modes (excluding slot for non-special prizes)
+        // Sequential rotation through modes (excluding slot for regular prizes)
         const rotationModes = ["balls", "wheel", "radar", "cards"];
         const mode = rotationModes[state.modeIndex % rotationModes.length];
         state.modeIndex = (state.modeIndex + 1) % rotationModes.length;
@@ -2742,15 +3265,15 @@
         ui.winnerBig.textContent = "#" + actualWinner;
         ui.winnerSmall.textContent = prize.name;
 
-        // Play cheer sound for second prize or grand prize
-        if(prize.key === "second" || prize.key === "grand"){
+        // Play cheer sound for major prizes (based on low quantity)
+        if(prize.total <= 2){
           setTimeout(() => SoundFX.cheer(), 200);
         }
 
         // record history
         const rec = {
           number: actualWinner,
-          prizeKey: prize.key,
+          prizeId: prize.id,
           prizeName: prize.name,
           prizeIndex: state.currentPrizeIndex,
           drawNo: prizeDrawNo(prize),
@@ -2769,6 +3292,7 @@
         state.isRolling = false;
         state.phase = 'idle';
         renderAll();
+        saveToStorage();
       }
 
       // ---------------------------
@@ -2786,7 +3310,7 @@
         }
 
         // restore prize remaining
-        const prize = state.prizes[last.prizeIndex] || state.prizes.find(p=>p.key===last.prizeKey);
+        const prize = state.prizes[last.prizeIndex] || state.prizes.find(p=>p.id===last.prizeId);
         if(prize){
           prize.remaining = Math.min(prize.total, prize.remaining + 1);
           // also ensure current prize pointer goes back if needed
@@ -2796,29 +3320,59 @@
         ui.winnerBig.textContent = "已重抽撤回";
         ui.winnerSmall.textContent = "上一位已加回抽獎池，請重新抽一次";
         renderAll();
+        saveToStorage();
       }
 
       // ---------------------------
       // Add surprise (increment)
       // ---------------------------
       function addSurpriseOne(){
-        const sp = state.prizes.find(p=>p.key==="surprise");
+        // Look for existing surprise prize marked with isSurprise flag
+        let sp = state.prizes.find(p => p.isSurprise);
+        
+        // Fallback: For backwards compatibility with existing data from before isSurprise flag.
+        // This checks Chinese text "加碼" in name for migration purposes.
+        // TODO: This migration support can be removed after a grace period (e.g., 6 months)
+        // once all existing users have upgraded and their data has been migrated.
+        if(!sp){
+          sp = state.prizes.find(p => p.name && (p.name.includes("加碼驚喜") || p.name.includes("加碼")));
+          if(sp){
+            // Migrate: mark it with the flag for future
+            sp.isSurprise = true;
+          }
+        }
+        
         if(sp){
           sp.total += 1;
           sp.remaining += 1;
-          // If everything else is finished, ensure we can draw
-          if(!getCurrentPrize()){
-            state.currentPrizeIndex = state.prizes.indexOf(sp);
-          }
+          sp.isSurprise = true; // Ensure flag is set
         }else{
-          // Shouldn't happen; but keep safe
-          state.prizes.push({key:"surprise", name:"加碼驚喜", total:1, remaining:1});
-          state.currentPrizeIndex = state.prizes.length-1;
+          // Create new surprise prize
+          const maxOrder = state.prizes.length > 0
+            ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
+            : 0;
+          
+          sp = {
+            id: generatePrizeId(),
+            name: "加碼驚喜",
+            description: "",
+            total: 1,
+            remaining: 1,
+            order: maxOrder + 1,
+            isSurprise: true
+          };
+          state.prizes.push(sp);
+        }
+        
+        // If everything else is finished, ensure we can draw
+        if(!getCurrentPrize()){
+          state.currentPrizeIndex = state.prizes.indexOf(sp);
         }
 
         ui.winnerBig.textContent = "已追加加碼";
         ui.winnerSmall.textContent = "加碼驚喜 +1 位";
         renderAll();
+        saveToStorage();
       }
 
       // ---------------------------
@@ -2864,17 +3418,87 @@
         SoundFX.setEnabled(ui.soundToggle.checked);
       });
 
-      ui.applyParticipants.addEventListener("click", ()=>{
+      ui.applySettings.addEventListener("click", ()=>{
         SoundFX.click();
+        const name = ui.eventNameInput.value.trim();
+        const subtitle = ui.eventSubtitleInput.value.trim();
         const v = parseInt(ui.participantsInput.value, 10);
-        if(!isFinite(v) || v < 1) return;
-        state.participantsN = v;
-        resetAll(); // forced reset as requested
+        
+        if(name) state.eventName = name;
+        state.eventSubtitle = subtitle;
+        
+        if(isFinite(v) && v >= 1){
+          state.participantsN = v;
+        }
+        
+        state.currentPrizeIndex = 0;
+        state.history = [];
+        rebuildCandidates();
+        ui.winnerBig.textContent = "準備抽獎";
+        ui.winnerSmall.textContent = "";
+        
+        renderAll();
+        saveToStorage();
+      });
+
+      ui.addPrizeBtn.addEventListener("click", ()=>{
+        SoundFX.click();
+        const name = ui.prizeNameInput.value;
+        const total = ui.prizeQuantityInput.value;
+        const desc = ui.prizeDescInput.value;
+        
+        if(addPrize(name, total, desc)){
+          ui.prizeNameInput.value = '';
+          ui.prizeQuantityInput.value = '1';
+          ui.prizeDescInput.value = '';
+          ui.prizeNameInput.focus();
+        }
+      });
+      
+      ui.updatePrizeBtn.addEventListener("click", ()=>{
+        SoundFX.click();
+        if(!state.editingPrizeId) return;
+        
+        const name = ui.prizeNameInput.value;
+        const total = ui.prizeQuantityInput.value;
+        const desc = ui.prizeDescInput.value;
+        
+        if(editPrize(state.editingPrizeId, name, total, desc)){
+          cancelEditPrize();
+        }
+      });
+      
+      ui.cancelEditBtn.addEventListener("click", ()=>{
+        SoundFX.click();
+        cancelEditPrize();
+      });
+      
+      ui.clearAllPrizes.addEventListener("click", ()=>{
+        SoundFX.click();
+        clearAllPrizes();
       });
 
       ui.resetAll.addEventListener("click", ()=>{
         SoundFX.click();
-        resetAll();
+        resetAllData();
+      });
+      
+      ui.exportBtn.addEventListener("click", ()=>{
+        SoundFX.click();
+        exportToJSON();
+      });
+      
+      ui.importBtn.addEventListener("click", ()=>{
+        SoundFX.click();
+        ui.importFile.click();
+      });
+      
+      ui.importFile.addEventListener("change", (e)=>{
+        const file = e.target.files[0];
+        if(file){
+          importFromJSON(file);
+          e.target.value = ''; // Reset file input
+        }
       });
 
       ui.addSurprise.addEventListener("click", ()=>{
@@ -2923,9 +3547,15 @@
       }
 
       function init(){
-        // default participants N
-        state.participantsN = 20;
-        resetAll();
+        // Try to load from localStorage, or use defaults
+        if(!loadFromStorage()){
+          state.eventName = "抽獎活動";
+          state.eventSubtitle = "";
+          state.participantsN = 20;
+          state.prizes = buildDefaultPrizes();
+        }
+        rebuildCandidates();
+        renderAll();
         renderEmptyCanvas();
         // Enable sound by default if checkbox is checked
         SoundFX.setEnabled(ui.soundToggle.checked);
