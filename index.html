@@ -1371,7 +1371,11 @@
       let prizeIdCounter = 0;
       
       function generatePrizeId(){
-        // Use timestamp + counter + random for uniqueness even within same millisecond
+        // Use timestamp + counter + random for uniqueness
+        // - timestamp: milliseconds precision
+        // - counter: cycles 0-9999 for same-millisecond calls
+        // - random: base36 random, padded to exactly 9 chars
+        // Combined: virtually impossible to have collisions
         prizeIdCounter = (prizeIdCounter + 1) % 10000;
         const timestamp = Date.now();
         const random = Math.random().toString(36).slice(2).padEnd(9, '0').slice(0, 9);
@@ -1620,7 +1624,10 @@
         
         state.prizes.forEach((p, idx)=>{
           const div = document.createElement("div");
-          div.className = "prizeItem" + (cur && cur.id===p.id && p.remaining>0 ? " active":"");
+          div.className = "prizeItem";
+          if(cur && cur.id===p.id && p.remaining>0){
+            div.classList.add("active");
+          }
           
           const header = document.createElement("div");
           header.className = "prizeHeader";
