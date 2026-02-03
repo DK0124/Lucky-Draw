@@ -1366,8 +1366,14 @@
       // ---------------------------
       // Prize Management Functions
       // ---------------------------
+      let prizeIdCounter = 0;
+      
       function generatePrizeId(){
-        return 'p' + Date.now() + Math.random().toString(36).slice(2, 11);
+        // Use timestamp + counter + random for uniqueness even within same millisecond
+        prizeIdCounter = (prizeIdCounter + 1) % 10000;
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).slice(2, 11);
+        return `p${timestamp}_${prizeIdCounter}_${random}`;
       }
       
       function addPrize(name, total, description){
@@ -1380,7 +1386,10 @@
           return false;
         }
         
-        const maxOrder = state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0);
+        const maxOrder = (state.prizes && state.prizes.length > 0) 
+          ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
+          : 0;
+        
         const newPrize = {
           id: generatePrizeId(),
           name: name.trim(),
@@ -1436,7 +1445,7 @@
         
         const drawn = prize.total - prize.remaining;
         if(drawn > 0){
-          if(!confirm(`「${prize.name}」已抽出 ${drawn} 名，確定要刪除嗎？\n已抽出的紀錄不會被移除。`)){
+          if(!confirm(`「${prize.name}」已抽出 ${drawn} 名，確定要刪除嗎？\n\n注意：已抽出的紀錄仍會保留，但該獎項資訊將無法在紀錄中顯示。`)){
             return;
           }
         }else{
@@ -1446,6 +1455,10 @@
         }
         
         state.prizes = state.prizes.filter(p => p.id !== id);
+        
+        // Note: Historical records with this prizeId will remain but show as orphaned
+        // This is intentional to preserve draw history integrity
+        
         saveToStorage();
         renderPrizeList();
       }
@@ -3301,17 +3314,29 @@
       // Add surprise (increment)
       // ---------------------------
       function addSurpriseOne(){
-        // Look for existing surprise prize by checking if it was previously added as surprise
-        // or if its name contains the surprise keyword (for backwards compatibility)
-        let sp = state.prizes.find(p => p.isSurprise || p.name.includes("加碼驚喜") || p.name.includes("加碼"));
+        // Look for existing surprise prize marked with isSurprise flag
+        let sp = state.prizes.find(p => p.isSurprise);
+        
+        // Fallback: For backwards compatibility with existing data,
+        // also check for Chinese text "加碼" in name. This is temporary migration logic.
+        if(!sp){
+          sp = state.prizes.find(p => p.name && (p.name.includes("加碼驚喜") || p.name.includes("加碼")));
+          if(sp){
+            // Migrate: mark it with the flag for future
+            sp.isSurprise = true;
+          }
+        }
         
         if(sp){
           sp.total += 1;
           sp.remaining += 1;
-          sp.isSurprise = true; // Mark it for future reference
+          sp.isSurprise = true; // Ensure flag is set
         }else{
           // Create new surprise prize
-          const maxOrder = state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0);
+          const maxOrder = (state.prizes && state.prizes.length > 0)
+            ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
+            : 0;
+          
           sp = {
             id: generatePrizeId(),
             name: "加碼驚喜",
