@@ -461,6 +461,7 @@
       min-height: 50px;
     }
     select{ cursor:pointer; }
+    .hidden{ display:none; }
     .mini{
       font-size: clamp(14px, 0.95vw, 18px);
       color: rgba(255,255,255,.64);
@@ -975,8 +976,8 @@
               <textarea id="prizeDescInput" rows="2" placeholder="例：包含筆記本、鋼筆等"></textarea>
               
               <button id="addPrizeBtn" class="btnSmall">新增獎項</button>
-              <button id="updatePrizeBtn" class="btnSmall" style="display:none;">更新獎項</button>
-              <button id="cancelEditBtn" class="btnSmall secondary" style="display:none;">取消編輯</button>
+              <button id="updatePrizeBtn" class="btnSmall hidden">更新獎項</button>
+              <button id="cancelEditBtn" class="btnSmall secondary hidden">取消編輯</button>
             </div>
 
             <div class="prizeListSection">
@@ -1372,7 +1373,7 @@
         // Use timestamp + counter + random for uniqueness even within same millisecond
         prizeIdCounter = (prizeIdCounter + 1) % 10000;
         const timestamp = Date.now();
-        const random = Math.random().toString(36).slice(2, 11);
+        const random = Math.random().toString(36).slice(2, 11).padEnd(9, '0');
         return `p${timestamp}_${prizeIdCounter}_${random}`;
       }
       
@@ -1386,7 +1387,7 @@
           return false;
         }
         
-        const maxOrder = (state.prizes && state.prizes.length > 0) 
+        const maxOrder = state.prizes.length > 0
           ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
           : 0;
         
@@ -1688,9 +1689,9 @@
         ui.prizeQuantityInput.value = prize.total;
         ui.prizeDescInput.value = prize.description;
         
-        ui.addPrizeBtn.style.display = 'none';
-        ui.updatePrizeBtn.style.display = 'block';
-        ui.cancelEditBtn.style.display = 'block';
+        ui.addPrizeBtn.classList.add('hidden');
+        ui.updatePrizeBtn.classList.remove('hidden');
+        ui.cancelEditBtn.classList.remove('hidden');
         
         ui.prizeNameInput.focus();
       }
@@ -1701,9 +1702,9 @@
         ui.prizeQuantityInput.value = '1';
         ui.prizeDescInput.value = '';
         
-        ui.addPrizeBtn.style.display = 'block';
-        ui.updatePrizeBtn.style.display = 'none';
-        ui.cancelEditBtn.style.display = 'none';
+        ui.addPrizeBtn.classList.remove('hidden');
+        ui.updatePrizeBtn.classList.add('hidden');
+        ui.cancelEditBtn.classList.add('hidden');
       }
 
       function renderHistory(){
@@ -3333,7 +3334,7 @@
           sp.isSurprise = true; // Ensure flag is set
         }else{
           // Create new surprise prize
-          const maxOrder = (state.prizes && state.prizes.length > 0)
+          const maxOrder = state.prizes.length > 0
             ? state.prizes.reduce((max, p) => Math.max(max, p.order || 0), 0)
             : 0;
           
