@@ -1,0 +1,2952 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>尾牙抽獎器｜春節主題｜1080P 舞台版</title>
+  <style>
+    :root{
+      /* Festive red and gold palette */
+      --red-primary:#D4232A;   /* Festive red */
+      --red-bright:#E53935;    /* Bright red */
+      --red-dark:#8B1A1F;      /* Dark red */
+      --red-darker:#4a0d0f;    /* Darker red */
+      --gold-primary:#FFD700;  /* Bright gold */
+      --gold-accent:#FFC107;   /* Gold accent */
+      --gold-light:#FFE57F;    /* Light gold */
+      --gold-dark:#d4af37;     /* Dark gold */
+      --ink:#0b0b0c;
+      --paper:#f7f2e6;
+      --shadow: rgba(0,0,0,.22);
+
+      /* Responsive layout variables using clamp for fluid sizing */
+      --safe: clamp(20px, 3vw, 60px);
+      --topbar-h: clamp(70px, 10vh, 110px);
+      --reveal-h: clamp(90px, 14vh, 150px);
+      --winner-list-width: clamp(200px, 18vw, 360px);
+      --panel-gap: clamp(10px, 1vw, 20px);
+      --admin-max-width: 1600px;
+      --admin-max-height: 900px;
+
+      --ui-radius: 22px;
+      --ui-border: rgba(255,215,0,.38);  /* gold border */
+      --ui-fill: rgba(139, 26, 31, .65); /* red fill */
+      --ui-fill-2: rgba(139, 26, 31, .45);
+      --ui-text: rgba(255,255,255,.96);
+      --ui-dim: rgba(255,255,255,.80);
+
+      /* golden glow */
+      --glow: 0 0 16px rgba(255,215,0,.35);
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 800px at 50% 35%, rgba(212,35,42,.28), transparent 60%),
+        radial-gradient(900px 700px at 80% 65%, rgba(255,215,0,.14), transparent 55%),
+        linear-gradient(180deg, var(--red-dark), #1a0808 60%, #0d0505);
+      color:var(--ui-text);
+      font-family: ui-sans-serif, system-ui, -apple-system, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", Arial;
+    }
+
+    /* Viewport is now a full-screen container */
+    #viewport{
+      position:fixed; inset:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    #stage{
+      width: 100%;
+      height: 100%;
+      position:relative;
+      border-radius:28px;
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 900px at 50% 35%, rgba(255,215,0,.06), transparent 62%),
+        linear-gradient(135deg, rgba(255,215,0,.05), transparent 55%),
+        linear-gradient(180deg, rgba(255,215,0,.03), transparent 35%),
+        linear-gradient(180deg, rgba(139,26,31,.35), rgba(74,13,15,.65));
+      box-shadow: 0 18px 70px rgba(0,0,0,.60), 0 0 40px rgba(255,215,0,.12);
+      border:1px solid rgba(255,215,0,.20);
+    }
+
+    /* golden decorative pattern overlay */
+    #stage::before{
+      content:"";
+      position:absolute; inset:0;
+      opacity:.22;
+      pointer-events:none;
+      background-image:
+        radial-gradient(circle at 10% 20%, rgba(255,215,0,.25) 0 2px, transparent 3px),
+        radial-gradient(circle at 18% 26%, rgba(255,215,0,.18) 0 1px, transparent 2px),
+        radial-gradient(circle at 82% 22%, rgba(255,215,0,.25) 0 2px, transparent 3px),
+        radial-gradient(circle at 88% 30%, rgba(255,215,0,.18) 0 1px, transparent 2px),
+        radial-gradient(circle at 65% 78%, rgba(255,215,0,.18) 0 1px, transparent 2px),
+        radial-gradient(circle at 72% 84%, rgba(255,215,0,.25) 0 2px, transparent 3px),
+        radial-gradient(circle at 24% 78%, rgba(255,215,0,.18) 0 1px, transparent 2px),
+        radial-gradient(circle at 30% 84%, rgba(255,215,0,.25) 0 2px, transparent 3px);
+      background-size: 420px 420px, 420px 420px, 520px 520px, 520px 520px,
+                       560px 560px, 560px 560px, 480px 480px, 480px 480px;
+      mix-blend-mode:screen;
+      filter: blur(.2px);
+    }
+    #stage::after{
+      content:"";
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(800px 600px at 50% 28%, rgba(255,215,0,.08), transparent 65%),
+        radial-gradient(900px 700px at 50% 80%, rgba(212,35,42,.14), transparent 60%);
+      opacity:.9;
+    }
+
+    .topbar{
+      position:absolute;
+      left:var(--safe); right:var(--safe);
+      top:var(--safe);
+      height:var(--topbar-h);
+      display:grid;
+      grid-template-columns: 1.1fr 1.4fr 1.1fr;
+      gap:18px;
+      padding:18px 22px;
+      border-radius: var(--ui-radius);
+      background: var(--ui-fill);
+      border: 1px solid var(--ui-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    .topbar .title{
+      display:flex; flex-direction:column; justify-content:center;
+      gap:6px;
+    }
+    .title .main{
+      font-size: clamp(28px, 2.4vw, 46px);
+      font-weight:900;
+      letter-spacing:.5px;
+      color:rgba(255,255,255,.96);
+      text-shadow: 0 2px 18px rgba(0,0,0,.35);
+      white-space:nowrap;
+    }
+    .title .sub{
+      font-size: clamp(16px, 1.15vw, 22px);
+      color:var(--ui-dim);
+      white-space:nowrap;
+    }
+    .centerInfo{
+      display:flex; flex-direction:column; justify-content:center; align-items:center;
+      gap:10px;
+      text-align:center;
+    }
+    #prizeName{
+      font-size: clamp(24px, 2.3vw, 44px);
+      font-weight:900;
+      letter-spacing:.2px;
+      color:rgba(255,255,255,.96);
+    }
+    #prizeProgress{
+      font-size: clamp(18px, 1.25vw, 24px);
+      color: var(--gold-primary);
+      font-weight:700;
+    }
+    .rightInfo{
+      display:flex; flex-direction:column; justify-content:center; align-items:flex-end;
+      gap:10px;
+      text-align:right;
+    }
+    .statLine{
+      font-size: clamp(18px, 1.25vw, 24px);
+      color:var(--ui-dim);
+    }
+    .statLine b{
+      color:rgba(255,255,255,.94);
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      background: rgba(139,26,31,.30);
+      border:1px solid rgba(255,215,0,.28);
+      font-size: clamp(16px, 1.15vw, 22px);
+      color:rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(255,215,0,.70);
+      box-shadow: 0 0 10px rgba(255,215,0,.35);
+    }
+
+    .mainArea{
+      position:absolute;
+      left:var(--safe);
+      right: calc(var(--safe) + var(--winner-list-width) + var(--panel-gap));
+      top: calc(var(--safe) + var(--topbar-h) + 12px);
+      bottom: calc(var(--safe) + var(--reveal-h) + 12px);
+      border-radius: 26px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.05);
+      overflow:hidden;
+      z-index:5;
+    }
+    canvas{
+      width:100%;
+      height:100%;
+      display:block;
+    }
+
+    .winnerListPanel{
+      position:absolute;
+      right:var(--safe);
+      top: calc(var(--safe) + var(--topbar-h) + 12px);
+      bottom: calc(var(--safe) + var(--reveal-h) + 12px);
+      width: var(--winner-list-width);
+      border-radius: 26px;
+      background: var(--ui-fill);
+      border:1px solid var(--ui-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+      z-index:6;
+      display: flex;
+      flex-direction: column;
+    }
+    .winnerListHeader{
+      padding: 16px 20px;
+      border-bottom: 1px solid rgba(255,215,0,.25);
+      background: var(--ui-fill-2);
+    }
+    .winnerListHeader h2{
+      margin: 0;
+      font-size: clamp(20px, 1.45vw, 28px);
+      font-weight: 900;
+      color: rgba(255,255,255,.96);
+      letter-spacing: 0.5px;
+    }
+    .winnerListContent{
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .winnerListContent::-webkit-scrollbar{
+      width: 8px;
+    }
+    .winnerListContent::-webkit-scrollbar-track{
+      background: rgba(0,0,0,.15);
+      border-radius: 4px;
+    }
+    .winnerListContent::-webkit-scrollbar-thumb{
+      background: rgba(255,215,0,.35);
+      border-radius: 4px;
+    }
+    .winnerListContent::-webkit-scrollbar-thumb:hover{
+      background: rgba(255,215,0,.50);
+    }
+    .winnerItem{
+      padding: 12px 14px;
+      margin-bottom: 8px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.25);
+      border: 1px solid rgba(255,215,0,.20);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      animation: slideIn 0.4s ease-out;
+      overflow: hidden;
+    }
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+    .winnerItem .winnerNumber{
+      font-size: clamp(16px, 1.15vw, 22px);
+      font-weight: 1000;
+      color: rgba(255,255,255,.96);
+      min-width: 60px;
+      max-width: 120px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .winnerItem .winnerPrize{
+      font-size: clamp(12px, 0.85vw, 16px);
+      font-weight: 700;
+      color: var(--gold-primary);
+      text-align: right;
+      flex: 1;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .winnerListEmpty{
+      padding: 40px 20px;
+      text-align: center;
+      color: rgba(255,255,255,.45);
+      font-size: clamp(16px, 1.05vw, 20px);
+    }
+
+    .reveal{
+      position:absolute;
+      left:var(--safe); right:var(--safe);
+      bottom:var(--safe);
+      height:var(--reveal-h);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      padding:18px 22px;
+      border-radius: var(--ui-radius);
+      background: var(--ui-fill);
+      border: 1px solid var(--ui-border);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      backdrop-filter: blur(10px);
+      z-index:10;
+    }
+    .revealLeft{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      gap:8px;
+      min-width: clamp(320px, 40%, 520px);
+    }
+    #winnerBig{
+      font-size: clamp(48px, 4.8vw, 92px);
+      font-weight:1000;
+      letter-spacing:.5px;
+      line-height:1;
+      color:rgba(255,255,255,.98);
+      text-shadow: 0 2px 22px rgba(0,0,0,.40);
+      white-space:nowrap;
+    }
+    #winnerSmall{
+      font-size: clamp(20px, 1.55vw, 30px);
+      color: var(--gold-primary);
+      font-weight:800;
+      letter-spacing:.2px;
+      white-space:nowrap;
+    }
+    .revealRight{
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      gap:14px;
+      flex:1;
+    }
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius: 18px;
+      padding:18px 20px;
+      font-size: clamp(20px, 1.45vw, 28px);
+      font-weight:900;
+      cursor:pointer;
+      color:#1a0808;
+      background: linear-gradient(180deg, var(--gold-primary), var(--gold-accent));
+      box-shadow: 0 12px 22px rgba(0,0,0,.35), 0 0 20px rgba(255,215,0,.25);
+      transition: transform .08s ease, filter .12s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btn.secondary{
+      background: rgba(139,26,31,.35);
+      color: rgba(255,255,255,.96);
+      border:1px solid rgba(255,215,0,.30);
+      box-shadow: none;
+      padding:18px 18px;
+    }
+    .btn[disabled]{
+      opacity:.55;
+      cursor:not-allowed;
+      filter:saturate(.6);
+    }
+
+    /* Admin panel - responsive sizing */
+    #admin{
+      position:absolute;
+      left:var(--safe); right:var(--safe);
+      top: calc(var(--safe) + 10px);
+      bottom: calc(var(--safe) + 10px);
+      max-width: min(95vw, var(--admin-max-width));
+      max-height: min(90vh, var(--admin-max-height));
+      margin: auto;
+      z-index:30;
+      display:none;
+      border-radius: 28px;
+      background: rgba(74,13,15,.88);
+      border:1px solid rgba(255,215,0,.30);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.60);
+      overflow:hidden;
+    }
+    #admin.open{ display:block; }
+    .adminHeader{
+      height: 80px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 0 22px;
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .adminHeader .h{
+      font-size: clamp(22px, 1.55vw, 30px);
+      font-weight:1000;
+      letter-spacing:.3px;
+    }
+    .adminHeader .hint{
+      font-size: clamp(16px, 1.05vw, 20px);
+      color: rgba(255,255,255,.68);
+    }
+    .adminGrid{
+      height: calc(100% - 80px);
+      display:grid;
+      grid-template-columns: 1.0fr 1.25fr 1.0fr;
+      gap:16px;
+      padding:16px;
+    }
+    .card{
+      border-radius: 22px;
+      background: rgba(139,26,31,.20);
+      border: 1px solid rgba(255,215,0,.22);
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      overflow:hidden;
+    }
+    .card h3{
+      margin:0;
+      font-size: clamp(18px, 1.25vw, 24px);
+      font-weight:1000;
+      letter-spacing:.2px;
+    }
+    .row{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    label{
+      font-size: clamp(14px, 0.95vw, 18px);
+      color: rgba(255,255,255,.78);
+    }
+    input[type="number"], select{
+      width:100%;
+      padding:14px 14px;
+      border-radius: 14px;
+      border:1px solid rgba(255,215,0,.28);
+      background: rgba(0,0,0,.40);
+      color: rgba(255,255,255,.96);
+      font-size: clamp(16px, 1.15vw, 22px);
+      outline:none;
+    }
+    select{ cursor:pointer; }
+    .mini{
+      font-size: clamp(14px, 0.95vw, 18px);
+      color: rgba(255,255,255,.64);
+      line-height:1.35;
+    }
+    .btnSmall{
+      appearance:none;
+      border:none;
+      border-radius: 14px;
+      padding:12px 14px;
+      font-size: clamp(16px, 1.15vw, 22px);
+      font-weight:900;
+      cursor:pointer;
+      color:#1a0808;
+      background: linear-gradient(180deg, var(--gold-primary), var(--gold-accent));
+      transition: transform .08s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .btnSmall.secondary{
+      background: rgba(139,26,31,.35);
+      color: rgba(255,255,255,.96);
+      border:1px solid rgba(255,215,0,.28);
+    }
+    .btnSmall.danger{
+      background: rgba(255,80,80,.12);
+      color: rgba(255,255,255,.92);
+      border:1px solid rgba(255,120,120,.25);
+    }
+    .btnSmall:active{ transform: translateY(1px) scale(.99); }
+
+    .prizeList{
+      overflow:auto;
+      padding-right:6px;
+    }
+    .prizeItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,.07);
+      background: rgba(0,0,0,.18);
+      margin-bottom:10px;
+    }
+    .prizeItem.active{
+      border-color: rgba(255,215,0,.45);
+      background: rgba(255,215,0,.15);
+    }
+    .prizeItem .n{
+      font-size: clamp(16px, 1.15vw, 22px);
+      font-weight:1000;
+      color: rgba(255,255,255,.94);
+    }
+    .prizeItem .c{
+      font-size: clamp(15px, 1.05vw, 20px);
+      color: rgba(255,255,255,.70);
+      white-space:nowrap;
+    }
+
+    .history{
+      overflow:auto;
+      padding-right:6px;
+      border-top:1px solid rgba(255,255,255,.06);
+      padding-top:10px;
+      margin-top:6px;
+    }
+    .histItem{
+      display:flex;
+      justify-content:space-between;
+      align-items:baseline;
+      gap:12px;
+      padding:12px 12px;
+      border-radius: 14px;
+      background: rgba(0,0,0,.18);
+      border:1px solid rgba(255,255,255,.06);
+      margin-bottom:10px;
+    }
+    .histItem .left{
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+    }
+    .histItem .no{
+      font-size: clamp(20px, 1.35vw, 26px);
+      font-weight:1000;
+      color: rgba(255,255,255,.96);
+    }
+    .histItem .pn{
+      font-size: clamp(14px, 0.95vw, 18px);
+      color: var(--gold-primary);
+      font-weight:800;
+    }
+    .histItem .t{
+      font-size: clamp(12px, 0.85vw, 16px);
+      color: rgba(255,255,255,.55);
+      white-space:nowrap;
+    }
+
+    /* Tiny hint in topbar only (A) */
+    .keyHint{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      font-size: clamp(16px, 1.15vw, 22px);
+      color: rgba(255,255,255,.78);
+    }
+    .kbd{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 38px;
+      height: 34px;
+      padding:0 10px;
+      border-radius: 10px;
+      border:1px solid rgba(255,215,0,.32);
+      background: rgba(139,26,31,.30);
+      color: rgba(255,255,255,.96);
+      font-weight:900;
+      font-size: clamp(14px, 0.95vw, 18px);
+    }
+
+    /* Winner Result Overlay */
+    #winnerResult{
+      position:absolute;
+      inset:0;
+      z-index:50;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background: rgba(0,0,0,.75);
+      backdrop-filter: blur(12px);
+      animation: fadeIn 0.4s ease;
+    }
+    #winnerResult.show{ display:flex; }
+    @keyframes fadeIn{
+      from{ opacity:0; }
+      to{ opacity:1; }
+    }
+    @keyframes pulse{
+      0%, 100%{ transform: scale(1); }
+      50%{ transform: scale(1.05); }
+    }
+    @keyframes glow{
+      0%, 100%{ filter: drop-shadow(0 0 30px rgba(255,215,0,.6)); }
+      50%{ filter: drop-shadow(0 0 60px rgba(255,215,0,.9)); }
+    }
+    .winnerContent{
+      text-align:center;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .winnerTitle{
+      font-size: clamp(36px, 3.1vw, 60px);
+      font-weight:900;
+      color: var(--gold-primary);
+      margin-bottom:30px;
+      letter-spacing:2px;
+      text-shadow: 0 4px 20px rgba(255,215,0,.5);
+    }
+    .winnerNumber{
+      font-size: clamp(120px, 14vw, 280px);
+      font-weight:1000;
+      color: #ffffff;
+      line-height:1;
+      text-shadow: 
+        0 0 40px rgba(255,215,0,.8),
+        0 0 80px rgba(255,215,0,.5),
+        0 8px 40px rgba(0,0,0,.6);
+      animation: glow 1.5s ease-in-out infinite;
+      letter-spacing:8px;
+    }
+    .winnerPrize{
+      font-size: clamp(32px, 2.9vw, 56px);
+      font-weight:900;
+      color: var(--gold-accent);
+      margin-top:30px;
+      letter-spacing:3px;
+      text-shadow: 0 3px 15px rgba(255,193,7,.4);
+    }
+
+    /* Prize Introduction Overlay */
+    #prizeIntro{
+      position:absolute;
+      inset:0;
+      z-index:45;
+      display:none;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap:50px;
+      background: linear-gradient(135deg, rgba(212,35,42,.92), rgba(139,26,31,.95));
+      backdrop-filter: blur(10px);
+      animation: fadeIn 0.5s ease;
+    }
+    #prizeIntro.show{ display:flex; }
+    .prizeIntroContent{
+      text-align:center;
+      max-width:90%;
+    }
+    .prizeIntroTitle{
+      font-size: clamp(44px, 4.15vw, 80px);
+      font-weight:1000;
+      color: var(--gold-primary);
+      margin-bottom:40px;
+      letter-spacing:4px;
+      text-shadow: 
+        0 0 30px rgba(255,215,0,.6),
+        0 4px 20px rgba(0,0,0,.5);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .prizeIntroProgress{
+      font-size: clamp(32px, 2.7vw, 52px);
+      font-weight:900;
+      color: rgba(255,255,255,.95);
+      margin-bottom:20px;
+      letter-spacing:2px;
+      text-shadow: 0 2px 15px rgba(0,0,0,.4);
+    }
+    .prizeIntroHint{
+      font-size: clamp(24px, 1.95vw, 38px);
+      color: rgba(255,255,255,.85);
+      letter-spacing:1px;
+      text-shadow: 0 2px 10px rgba(0,0,0,.3);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .prizeIntroButton{
+      appearance:none;
+      border:none;
+      border-radius: 24px;
+      padding:28px 50px;
+      font-size: clamp(26px, 2.2vw, 42px);
+      font-weight:1000;
+      cursor:pointer;
+      color:#1a0808;
+      background: linear-gradient(180deg, var(--gold-primary), var(--gold-accent));
+      box-shadow: 0 15px 40px rgba(0,0,0,.4), 0 0 30px rgba(255,215,0,.4);
+      transition: transform .12s ease, filter .15s ease;
+      user-select:none;
+      letter-spacing:3px;
+    }
+    .prizeIntroButton:hover{
+      transform: translateY(-3px);
+      box-shadow: 0 18px 50px rgba(0,0,0,.5), 0 0 40px rgba(255,215,0,.6);
+    }
+    .prizeIntroButton:active{
+      transform: translateY(1px) scale(.98);
+    }
+
+    /* Scrollbars */
+    .prizeList::-webkit-scrollbar, .history::-webkit-scrollbar{ width:8px; }
+    .prizeList::-webkit-scrollbar-thumb, .history::-webkit-scrollbar-thumb{
+      background: rgba(255,255,255,.16);
+      border-radius: 999px;
+    }
+
+    /* Responsive design for smaller screens */
+    @media screen and (max-width: 768px) {
+      :root {
+        --topbar-h: 80px;
+        --reveal-h: 100px;
+        --winner-list-width: 240px;
+        --safe: 40px;  /* Reduced safe area padding for mobile */
+      }
+      
+      /* Adjust stage border radius for mobile */
+      #stage {
+        border-radius: 18px;
+      }
+      
+      /* Scale down font sizes for better readability on small screens */
+      .topbar h1 { font-size: 32px; }
+      .stat { font-size: 15px; }
+      .stat .num { font-size: 28px; }
+      
+      /* Make buttons more touch-friendly */
+      .btnDraw {
+        padding: 18px 40px;
+        font-size: 26px;
+        border-radius: 18px;
+      }
+      
+      .btnFullscreen {
+        width: 50px;
+        height: 50px;
+      }
+    }
+    
+    @media screen and (max-width: 480px) {
+      :root {
+        --safe: 30px;  /* Further reduced safe area for very small screens */
+        --topbar-h: 70px;
+        --reveal-h: 90px;
+        --winner-list-width: 200px;
+      }
+      
+      /* Further reduce sizes for very small screens */
+      .topbar h1 { font-size: 28px; }
+      .stat { font-size: 13px; }
+      .stat .num { font-size: 24px; }
+      
+      .btnDraw {
+        padding: 14px 32px;
+        font-size: 22px;
+      }
+      
+      .btnFullscreen {
+        width: 44px;
+        height: 44px;
+      }
+    }
+    
+    /* Adjustments for very wide screens */
+    @media screen and (min-aspect-ratio: 21/9) {
+      #stage {
+        max-width: 90vw;
+      }
+    }
+    
+    /* Adjustments for portrait orientation */
+    @media screen and (orientation: portrait) {
+      #stage {
+        border-radius: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="viewport">
+    <div id="stage" role="application" aria-label="尾牙抽獎器舞台">
+      <div class="topbar">
+        <div class="title">
+          <div class="main">2026 尾牙抽獎</div>
+          <div class="sub">
+            <span class="keyHint"><span class="kbd">A</span>管理面板</span>
+          </div>
+        </div>
+
+        <div class="centerInfo">
+          <div id="prizeName">—</div>
+          <div id="prizeProgress">—</div>
+        </div>
+
+        <div class="rightInfo">
+          <div class="pill"><span class="dot"></span><span>剩餘人數 <b id="statPool">—</b></span></div>
+          <div class="statLine">已抽出 <b id="statWinners">0</b> 人｜剩餘獎項 <b id="statPrizes">—</b></div>
+        </div>
+      </div>
+
+      <div class="mainArea">
+        <canvas id="canvas"></canvas>
+      </div>
+
+      <!-- Winner List Panel -->
+      <div class="winnerListPanel">
+        <div class="winnerListHeader">
+          <h2>🏆 得獎名單</h2>
+        </div>
+        <div class="winnerListContent" id="winnerListContent">
+          <div class="winnerListEmpty">尚未開始抽獎</div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <div class="revealLeft">
+          <div id="winnerBig">準備抽獎</div>
+          <div id="winnerSmall">按空白鍵開始（不提示在螢幕上）</div>
+        </div>
+        <div class="revealRight">
+          <button id="btnDraw" class="btn">開始抽獎</button>
+          <button id="btnFullscreen" class="btn secondary" title="建議電視播放時開啟">全螢幕</button>
+        </div>
+      </div>
+
+      <!-- Admin Panel -->
+      <div id="admin" aria-hidden="true">
+        <div class="adminHeader">
+          <div class="h">管理面板</div>
+          <div class="hint">按 A 關閉｜參加人數套用會強制重置（清空已抽）</div>
+        </div>
+
+        <div class="adminGrid">
+          <div class="card">
+            <h3>參加人數</h3>
+            <label for="participantsInput">N（將生成 1..N）</label>
+            <input id="participantsInput" type="number" min="1" step="1" inputmode="numeric" />
+            <div class="row">
+              <button id="applyParticipants" class="btnSmall">套用並重置</button>
+              <button id="resetAll" class="btnSmall danger">全部重置</button>
+            </div>
+            <div class="mini">
+              - 套用會清空「已抽出」與「獎項進度」，重新開始。<br/>
+              - 若抽獎池人數為 0，將無法抽獎。
+            </div>
+
+            <h3 style="margin-top:10px;">動畫與音效</h3>
+            <label for="modeSelect">動畫模式</label>
+            <select id="modeSelect">
+              <option value="auto" selected>自動輪替（每次隨機）</option>
+              <option value="balls">福袋球池（碰撞）</option>
+              <option value="wheel">金運輪盤</option>
+              <option value="radar">福星雷達</option>
+              <option value="slot">紅包拉霸</option>
+              <option value="cards">抽籤桌面</option>
+            </select>
+            <div class="row" style="margin-top:4px;">
+              <label class="row" style="gap:10px; margin:0;">
+                <input id="soundToggle" type="checkbox" checked />
+                <span style="font-size:20px;">音效</span>
+              </label>
+            </div>
+            <div class="mini">音效使用內建 WebAudio（無需外部檔案）。</div>
+          </div>
+
+          <div class="card">
+            <h3>固定獎項（依序一名一名抽）</h3>
+            <div class="prizeList" id="prizeList"></div>
+            <div class="row">
+              <button id="addSurprise" class="btnSmall secondary">＋加碼驚喜（1名）</button>
+              <button id="redrawLast" class="btnSmall secondary">重抽上一位</button>
+            </div>
+            <div class="mini">
+              - 重抽：允許把同號加回抽獎池，再抽一次。<br/>
+              - 加碼：每按一次追加 1 名「加碼驚喜」。
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>已抽出紀錄</h3>
+            <div class="mini">（只在管理面板顯示；舞台畫面保持乾淨）</div>
+            <div class="history" id="history"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prize Introduction Overlay -->
+      <div id="prizeIntro">
+        <div class="prizeIntroContent">
+          <div class="prizeIntroTitle" id="introTitle">—</div>
+          <div class="prizeIntroProgress" id="introProgress">—</div>
+        </div>
+        <button id="btnStartDraw" class="prizeIntroButton">開始抽獎 ✨</button>
+      </div>
+
+      <!-- Winner Result Overlay -->
+      <div id="winnerResult">
+        <div class="winnerContent">
+          <div class="winnerTitle">🎊 中獎號碼 🎊</div>
+          <div class="winnerNumber" id="resultNumber">—</div>
+          <div class="winnerPrize" id="resultPrize">—</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      "use strict";
+
+      // ---------------------------
+      // Helpers
+      // ---------------------------
+      function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+      function lerp(a,b,t){ return a + (b-a)*t; }
+      function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
+      function easeOutExpo(t){ return t === 1 ? 1 : 1 - Math.pow(2, -10*t); }
+      // Standard bounce easing function with natural physics-based coefficients
+      // Creates a realistic bounce effect for slot machine reels
+      function easeOutBounce(t) {
+        if (t < 1/2.75) return 7.5625*t*t;
+        else if (t < 2/2.75) return 7.5625*(t-=1.5/2.75)*t+0.75;
+        else if (t < 2.5/2.75) return 7.5625*(t-=2.25/2.75)*t+0.9375;
+        else return 7.5625*(t-=2.625/2.75)*t+0.984375;
+      }
+      function normAngle(a){
+        const two = Math.PI*2;
+        a = a % two;
+        if(a < 0) a += two;
+        return a;
+      }
+      function shuffleInPlace(arr){
+        for(let i=arr.length-1;i>0;i--){
+          const j = Math.floor(Math.random()*(i+1));
+          const tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+        }
+        return arr;
+      }
+      function now(){ return performance.now(); }
+      function pad2(n){ return (n<10?'0':'')+n; }
+      function fmtTime(ts){
+        const d = new Date(ts);
+        return pad2(d.getHours())+":"+pad2(d.getMinutes())+":"+pad2(d.getSeconds());
+      }
+      function isTypingTarget(el){
+        if(!el) return false;
+        const tag = (el.tagName || '').toLowerCase();
+        return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+      }
+
+      // ---------------------------
+      // No longer need stage scaling - stage is now 100% viewport
+      // ---------------------------
+      const stage = document.getElementById("stage");
+
+      // ---------------------------
+      // UI elements
+      // ---------------------------
+      const ui = {
+        prizeName: document.getElementById("prizeName"),
+        prizeProgress: document.getElementById("prizeProgress"),
+        statPool: document.getElementById("statPool"),
+        statWinners: document.getElementById("statWinners"),
+        statPrizes: document.getElementById("statPrizes"),
+        winnerBig: document.getElementById("winnerBig"),
+        winnerSmall: document.getElementById("winnerSmall"),
+        btnDraw: document.getElementById("btnDraw"),
+        btnFullscreen: document.getElementById("btnFullscreen"),
+        admin: document.getElementById("admin"),
+        participantsInput: document.getElementById("participantsInput"),
+        applyParticipants: document.getElementById("applyParticipants"),
+        resetAll: document.getElementById("resetAll"),
+        modeSelect: document.getElementById("modeSelect"),
+        soundToggle: document.getElementById("soundToggle"),
+        prizeList: document.getElementById("prizeList"),
+        addSurprise: document.getElementById("addSurprise"),
+        redrawLast: document.getElementById("redrawLast"),
+        history: document.getElementById("history"),
+        prizeIntro: document.getElementById("prizeIntro"),
+        introTitle: document.getElementById("introTitle"),
+        introProgress: document.getElementById("introProgress"),
+        btnStartDraw: document.getElementById("btnStartDraw"),
+        winnerResult: document.getElementById("winnerResult"),
+        resultNumber: document.getElementById("resultNumber"),
+        resultPrize: document.getElementById("resultPrize"),
+        winnerListContent: document.getElementById("winnerListContent"),
+      };
+
+      // ---------------------------
+      // Audio (subtle)
+      // ---------------------------
+      const SoundFX = (function(){
+        let ctx = null;
+        let enabled = false;
+
+        function ensure(){
+          if(!ctx){
+            ctx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          return ctx;
+        }
+        function setEnabled(v){
+          enabled = !!v;
+          if(enabled){
+            try{ ensure().resume(); }catch(e){}
+          }
+        }
+        function beep(freq, dur, type, gain){
+          if(!enabled) return;
+          const c = ensure();
+          const t0 = c.currentTime;
+          const o = c.createOscillator();
+          const g = c.createGain();
+          o.type = type || "sine";
+          o.frequency.setValueAtTime(freq, t0);
+          g.gain.setValueAtTime((gain==null?0.02:gain), t0);
+          g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          o.connect(g); g.connect(c.destination);
+          o.start(t0);
+          o.stop(t0 + dur + 0.01);
+        }
+        function thump(){
+          // quick low hit
+          beep(120, 0.08, "triangle", 0.03);
+          beep(70, 0.12, "sine", 0.02);
+        }
+        function tick(){
+          beep(1200, 0.03, "square", 0.015);
+        }
+        function ping(){
+          beep(880, 0.05, "sine", 0.015);
+        }
+        function fanfare(){
+          // Celebration fanfare sound
+          if(!enabled) return;
+          const notes = [523, 659, 784, 1047]; // C, E, G, C (major chord)
+          notes.forEach((freq, i) => {
+            setTimeout(() => beep(freq, 0.3, "sine", 0.025), i * 80);
+          });
+        }
+        function click(){
+          // Button click feedback
+          beep(800, 0.04, "square", 0.012);
+        }
+        function cheer(){
+          // Celebration cheer sound with layered notes
+          if(!enabled) return;
+          const layers = [
+            [440, 554, 659, 880],      // A major chord layer 1
+            [523, 659, 784, 1047],     // C major chord layer 2
+            [587, 740, 880, 1175],     // D major chord layer 3
+          ];
+          layers.forEach((freqs, layerIdx) => {
+            freqs.forEach((freq, i) => {
+              setTimeout(() => beep(freq, 0.4, "sine", 0.02), layerIdx * 100 + i * 60);
+            });
+          });
+        }
+        function slotSpin(){
+          // Continuous spinning sound for slot machine
+          if(!enabled) return;
+          const c = ensure();
+          const t0 = c.currentTime;
+          const dur = 0.15;
+          // Low frequency mechanical hum
+          const o1 = c.createOscillator();
+          const g1 = c.createGain();
+          o1.type = "sawtooth";
+          o1.frequency.setValueAtTime(80, t0);
+          g1.gain.setValueAtTime(0.015, t0);
+          g1.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          o1.connect(g1); g1.connect(c.destination);
+          o1.start(t0);
+          o1.stop(t0 + dur);
+          // Higher frequency whir
+          const o2 = c.createOscillator();
+          const g2 = c.createGain();
+          o2.type = "square";
+          o2.frequency.setValueAtTime(240, t0);
+          g2.gain.setValueAtTime(0.008, t0);
+          g2.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+          o2.connect(g2); g2.connect(c.destination);
+          o2.start(t0);
+          o2.stop(t0 + dur);
+        }
+        function reelStop(){
+          // Prominent ding for reel stopping
+          beep(1200, 0.12, "sine", 0.025);
+          beep(1600, 0.08, "sine", 0.018);
+        }
+        function jackpot(){
+          // Big jackpot sound for slot machine win
+          if(!enabled) return;
+          const notes = [523, 659, 784, 1047, 1319]; // C major scale up
+          notes.forEach((freq, i) => {
+            setTimeout(() => beep(freq, 0.35, "sine", 0.028), i * 70);
+          });
+        }
+        function cardFlip(){
+          // Card flipping sound
+          beep(600, 0.06, "square", 0.012);
+          beep(750, 0.04, "sine", 0.008);
+        }
+        function cardSelect(){
+          // Card selection confirmation
+          beep(880, 0.08, "sine", 0.02);
+          beep(1100, 0.06, "sine", 0.015);
+        }
+        return { setEnabled, tick, ping, thump, fanfare, click, cheer, slotSpin, reelStop, jackpot, cardFlip, cardSelect };
+      })();
+
+      // ---------------------------
+      // Prize plan (fixed)
+      // ---------------------------
+      function buildDefaultPrizes(){
+        return [
+          { key:"powerbank", name:"行動電源", total:3, remaining:3 },
+          { key:"airfryer",  name:"氣炸鍋",   total:2, remaining:2 },
+          { key:"second",   name:"貳獎 AirPods Pro", total:1, remaining:1 },
+          { key:"grand",    name:"大獎 iPad", total:1, remaining:1 },
+          { key:"surprise", name:"加碼驚喜", total:4, remaining:4 },
+        ];
+      }
+
+      // ---------------------------
+      // State
+      // ---------------------------
+      const state = {
+        participantsN: 20,
+        candidates: [],
+        prizes: buildDefaultPrizes(),
+        currentPrizeIndex: 0,
+        history: [],
+        isRolling: false,
+        phase: 'idle', // 'idle' | 'prizeIntro' | 'rolling' | 'result'
+        lastMode: null,
+        modeIndex: 0,
+      };
+
+      function rebuildCandidates(){
+        const N = state.participantsN;
+        state.candidates = [];
+        for(let i=1;i<=N;i++) state.candidates.push(i);
+      }
+
+      function resetAll(){
+        state.prizes = buildDefaultPrizes();
+        state.currentPrizeIndex = 0;
+        state.history = [];
+        rebuildCandidates();
+        ui.winnerBig.textContent = "準備抽獎";
+        ui.winnerSmall.textContent = "";
+        renderAll();
+      }
+
+      function totalRemainingPrizes(){
+        return state.prizes.reduce((s,p)=>s+p.remaining,0);
+      }
+
+      function getCurrentPrize(){
+        // find next prize with remaining > 0 starting at current index
+        for(let i=state.currentPrizeIndex;i<state.prizes.length;i++){
+          if(state.prizes[i].remaining > 0){
+            state.currentPrizeIndex = i;
+            return state.prizes[i];
+          }
+        }
+        // none remaining
+        return null;
+      }
+
+      function prizeDrawNo(prize){
+        return (prize.total - prize.remaining) + 1;
+      }
+
+      // ---------------------------
+      // Admin rendering
+      // ---------------------------
+      function renderPrizeList(){
+        const cur = getCurrentPrize();
+        ui.prizeList.innerHTML = "";
+        state.prizes.forEach((p, idx)=>{
+          const div = document.createElement("div");
+          div.className = "prizeItem" + (cur && cur.key===p.key && p.remaining>0 ? " active":"");
+          const left = document.createElement("div");
+          left.className = "n";
+          left.textContent = p.name;
+          const right = document.createElement("div");
+          right.className = "c";
+          right.textContent = `剩 ${p.remaining} / 共 ${p.total}`;
+          div.appendChild(left);
+          div.appendChild(right);
+          ui.prizeList.appendChild(div);
+        });
+      }
+
+      function renderHistory(){
+        ui.history.innerHTML = "";
+        if(state.history.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "mini";
+          empty.textContent = "尚未抽出任何得獎者。";
+          ui.history.appendChild(empty);
+          return;
+        }
+        // newest first
+        for(let i=state.history.length-1;i>=0;i--){
+          const h = state.history[i];
+          const row = document.createElement("div");
+          row.className = "histItem";
+
+          const left = document.createElement("div");
+          left.className = "left";
+          const no = document.createElement("div");
+          no.className = "no";
+          no.textContent = "#" + h.number;
+          const pn = document.createElement("div");
+          pn.className = "pn";
+          pn.textContent = h.prizeName + "（第 " + h.drawNo + " 位）";
+          left.appendChild(no);
+          left.appendChild(pn);
+
+          const t = document.createElement("div");
+          t.className = "t";
+          t.textContent = fmtTime(h.time);
+
+          row.appendChild(left);
+          row.appendChild(t);
+          ui.history.appendChild(row);
+        }
+      }
+
+      function renderWinnerList(){
+        ui.winnerListContent.innerHTML = "";
+        if(state.history.length === 0){
+          const empty = document.createElement("div");
+          empty.className = "winnerListEmpty";
+          empty.textContent = "尚未開始抽獎";
+          ui.winnerListContent.appendChild(empty);
+          return;
+        }
+        // newest first
+        for(let i=state.history.length-1;i>=0;i--){
+          const h = state.history[i];
+          const item = document.createElement("div");
+          item.className = "winnerItem";
+          const num = document.createElement("div");
+          num.className = "winnerNumber";
+          num.textContent = "#" + h.number;
+          const prize = document.createElement("div");
+          prize.className = "winnerPrize";
+          prize.textContent = h.prizeName;
+          item.appendChild(num);
+          item.appendChild(prize);
+          ui.winnerListContent.appendChild(item);
+        }
+      }
+
+      function renderTopUI(){
+        const prize = getCurrentPrize();
+        if(prize){
+          ui.prizeName.textContent = prize.name;
+          ui.prizeProgress.textContent = `第 ${prizeDrawNo(prize)} 位 / 共 ${prize.total} 位`;
+        }else{
+          ui.prizeName.textContent = "全部抽完";
+          ui.prizeProgress.textContent = "";
+        }
+
+        ui.statPool.textContent = String(state.candidates.length);
+        ui.statWinners.textContent = String(state.history.length);
+        ui.statPrizes.textContent = String(totalRemainingPrizes());
+
+        // draw button state
+        const canDraw = (!state.isRolling) && (state.candidates.length > 0) && (getCurrentPrize() != null);
+        ui.btnDraw.disabled = !canDraw;
+      }
+
+      function renderAll(){
+        ui.participantsInput.value = String(state.participantsN);
+        renderPrizeList();
+        renderHistory();
+        renderWinnerList();
+        renderTopUI();
+      }
+
+      // ---------------------------
+      // Canvas setup
+      // ---------------------------
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+
+      let dpr = 1;
+      function resizeCanvas(){
+        if (!canvas) return;
+        
+        const rect = canvas.parentElement.getBoundingClientRect(); // 使用父容器尺寸
+        dpr = window.devicePixelRatio || 1;
+        
+        // 確保最小尺寸
+        const width = Math.max(100, Math.floor(rect.width));
+        const height = Math.max(100, Math.floor(rect.height));
+        
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        
+        canvas.width = Math.floor(width * dpr);
+        canvas.height = Math.floor(height * dpr);
+        
+        // 保存邏輯尺寸供動畫使用
+        canvas.logicalWidth = width;
+        canvas.logicalHeight = height;
+        
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        
+        // 清空畫布
+        ctx.clearRect(0, 0, width, height);
+      }
+      window.addEventListener("resize", resizeCanvas, {passive:true});
+      resizeCanvas();
+
+      // ---------------------------
+      // Animations
+      // ---------------------------
+      const MODES = ["balls","wheel","radar","slot","cards"];
+
+      function pickMode(prize){
+        const sel = ui.modeSelect.value;
+        if(sel !== "auto") return sel;
+        
+        // Special rule: grand and second prizes always use slot animation
+        if(prize && (prize.key === "grand" || prize.key === "second")){
+          return "slot";
+        }
+        
+        // Sequential rotation through modes (excluding slot for non-special prizes)
+        const rotationModes = ["balls", "wheel", "radar", "cards"];
+        const mode = rotationModes[state.modeIndex % rotationModes.length];
+        state.modeIndex = (state.modeIndex + 1) % rotationModes.length;
+        return mode;
+      }
+
+      // Particles for effects
+      class Particle{
+        constructor(x,y,vx,vy,life, size, kind){
+          this.x=x; this.y=y; this.vx=vx; this.vy=vy;
+          this.life=life; this.maxLife=life;
+          this.size=size; this.kind=kind||"spark";
+        }
+        step(dt){
+          this.life -= dt;
+          this.x += this.vx*dt;
+          this.y += this.vy*dt;
+          // drag
+          this.vx *= (1 - 0.9*dt);
+          this.vy *= (1 - 0.9*dt);
+          // gravity tiny
+          this.vy += 220*dt*(this.kind==="dust" ? 0.15 : 0.25);
+        }
+        draw(ctx){
+          if(this.life<=0) return;
+          const t = this.life/this.maxLife;
+          const a = clamp(t, 0, 1);
+          ctx.save();
+          ctx.globalAlpha = a;
+          if(this.kind==="shock"){
+            ctx.strokeStyle = "rgba(255,215,0," + (0.25*a) + ")";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size*(1-a)*0.2 + this.size*(1-t)*1.2, 0, Math.PI*2);
+            ctx.stroke();
+          }else{
+            ctx.fillStyle = this.kind==="dust"
+              ? "rgba(255,215,0," + (0.55*a) + ")"
+              : "rgba(255,215,0," + (0.75*a) + ")";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI*2);
+            ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+
+      // Base drawing helpers
+      function clearStage(){
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.clearRect(0,0,w,h);
+
+        // subtle gradient wash on canvas area only (keep low contrast)
+        const g = ctx.createLinearGradient(0,0,0,h);
+        g.addColorStop(0, "rgba(255,255,255,.03)");
+        g.addColorStop(1, "rgba(0,0,0,.08)");
+        ctx.fillStyle = g;
+        ctx.fillRect(0,0,w,h);
+      }
+
+      function drawCenterBadge(text){
+        const w = canvas.clientWidth, h = canvas.clientHeight;
+        ctx.save();
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.font = "900 46px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+        ctx.fillStyle = "rgba(255,255,255,.10)";
+        ctx.fillText(text, w/2, h/2);
+        ctx.restore();
+      }
+
+      // Helper: rounded rect
+      function roundRect(ctx, x, y, w, h, r){
+        r = Math.min(r, w/2, h/2);
+        ctx.beginPath();
+        ctx.moveTo(x+r, y);
+        ctx.arcTo(x+w, y, x+w, y+h, r);
+        ctx.arcTo(x+w, y+h, x, y+h, r);
+        ctx.arcTo(x, y+h, x, y, r);
+        ctx.arcTo(x, y, x+w, y, r);
+        ctx.closePath();
+      }
+
+      // ---------------------------
+      // Wheel animation
+      // ---------------------------
+      function runWheel(opts){
+        const {durationMs, numbers, winner} = opts;
+        const w = canvas.logicalWidth || canvas.clientWidth;
+        const h = canvas.logicalHeight || canvas.clientHeight;
+        const cx = w*0.5, cy = h*0.48;
+        const R = Math.min(w,h)*0.35; // 增加到 35%
+
+        const list = numbers.slice();
+        const n = list.length;
+        const winnerIdx = list.indexOf(winner);
+        const seg = (Math.PI*2)/n;
+        const pointerAngle = -Math.PI/2;
+
+        const startRot = Math.random()*Math.PI*2;
+        const winnerMid = (winnerIdx + 0.5)*seg;
+
+        // Make end rotation strictly greater than start (monotonic forward)
+        const extraTurns = (5 + Math.floor(Math.random()*2)) * Math.PI*2; // 5-6 turns
+        const delta = normAngle((pointerAngle - winnerMid) - startRot);
+        const endRot = startRot + extraTurns + delta;
+
+        let lastTick = Math.floor(startRot/seg);
+
+        const particles = [];
+
+        function frame(t){
+          clearStage();
+
+          const p = clamp(t/durationMs, 0, 1);
+          const e = easeOutExpo(p);
+
+          const rot = startRot + (endRot - startRot)*e;
+
+          // tick sound on segment boundary crossing
+          const tickNow = Math.floor(rot/seg);
+          if(tickNow !== lastTick && p < 0.98){
+            lastTick = tickNow;
+            SoundFX.tick();
+          }
+
+          // wheel base
+          ctx.save();
+          ctx.translate(cx,cy);
+          ctx.rotate(rot);
+
+          for(let i=0;i<n;i++){
+            const a0 = i*seg;
+            const a1 = a0 + seg;
+
+            // alternating subtle shades (no glow)
+            const isAlt = (i%2===0);
+            ctx.beginPath();
+            ctx.moveTo(0,0);
+            ctx.arc(0,0,R,a0,a1);
+            ctx.closePath();
+            ctx.fillStyle = isAlt ? "rgba(212,35,42,.35)" : "rgba(255,215,0,.12)";
+            ctx.fill();
+
+            // segment border
+            ctx.strokeStyle = "rgba(255,255,255,.06)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // number
+            const num = list[i];
+            const mid = a0 + seg/2;
+            const tx = Math.cos(mid) * (R*0.70);
+            const ty = Math.sin(mid) * (R*0.70);
+
+            const font = clamp((R*0.32)/Math.sqrt(n), 14, 34);
+            ctx.save();
+            ctx.translate(tx,ty);
+            ctx.rotate(mid + Math.PI/2);
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = "1000 " + font.toFixed(0) + "px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+            ctx.fillStyle = "rgba(255,255,255,.90)";
+            ctx.fillText(String(num), 0, 0);
+            ctx.restore();
+          }
+
+          // inner ring
+          ctx.beginPath();
+          ctx.arc(0,0,R*0.12,0,Math.PI*2);
+          ctx.fillStyle = "rgba(0,0,0,.20)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255,215,0,.35)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          ctx.restore();
+
+          // pointer (top)
+          ctx.save();
+          const px = cx, py = cy - R - 16;
+          const bounce = (p>0.78 ? Math.sin((p-0.78)*Math.PI*9) * (1-p) * 14 : 0);
+          ctx.translate(0, bounce);
+
+          ctx.beginPath();
+          ctx.moveTo(px, py+58);
+          ctx.lineTo(px-24, py);
+          ctx.lineTo(px+24, py);
+          ctx.closePath();
+          ctx.fillStyle = "rgba(255,215,0,.95)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(0,0,0,.25)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // small cap
+          ctx.beginPath();
+          ctx.arc(px, py+60, 10, 0, Math.PI*2);
+          ctx.fillStyle = "rgba(255,255,255,.15)";
+          ctx.fill();
+          ctx.restore();
+
+          // lock effect near end (no jump)
+          if(p > 0.90){
+            const a = clamp((p-0.90)/0.10, 0, 1);
+            // gold ring
+            ctx.save();
+            ctx.globalAlpha = 0.9*a;
+            ctx.strokeStyle = "rgba(255,215,0,.45)";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.arc(cx,cy,R*0.95,0,Math.PI*2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // end burst
+          if(p > 0.985 && particles.length === 0){
+            SoundFX.thump();
+            for(let i=0;i<120;i++){
+              const ang = Math.random()*Math.PI*2;
+              const sp = 220 + Math.random()*520;
+              particles.push(new Particle(cx, cy, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.70 + Math.random()*0.25, 2+Math.random()*2, "dust"));
+            }
+            particles.push(new Particle(cx,cy,0,0,0.45, R*0.55, "shock"));
+          }
+          // particles
+          if(particles.length){
+            const dt = 1/60;
+            for(let i=particles.length-1;i>=0;i--){
+              particles[i].step(dt);
+              particles[i].draw(ctx);
+              if(particles[i].life<=0) particles.splice(i,1);
+            }
+          }
+          
+          // Return completion status when animation done and particles cleared
+          if(p >= 1.0 && particles.length === 0){
+            // CRITICAL: Calculate which segment is actually under the pointer
+            // When animation completes, rot = endRot
+            // The pointer is at pointerAngle in world coordinates
+            // Find which segment is closest to the pointer
+            let closestIdx = 0;
+            let closestDist = Infinity;
+            for(let i = 0; i < n; i++){
+              const segMid = (i + 0.5) * seg;
+              const worldAngle = segMid + endRot;
+              let normalized = worldAngle % (Math.PI*2);
+              if(normalized < 0) normalized += Math.PI*2;
+              
+              // Calculate angular distance from pointer (properly handling wrap-around)
+              let pointerNormalized = pointerAngle % (Math.PI*2);
+              if(pointerNormalized < 0) pointerNormalized += Math.PI*2;
+              let dist = Math.abs(normalized - pointerNormalized);
+              if(dist > Math.PI) dist = Math.PI*2 - dist;
+              
+              if(dist < closestDist){
+                closestDist = dist;
+                closestIdx = i;
+              }
+            }
+            const displayedWinner = list[closestIdx];
+            return { done: true, winner: displayedWinner };
+          }
+          return { done: false };
+        }
+
+        return { frame };
+      }
+
+      // ---------------------------
+      // Radar animation
+      // ---------------------------
+      function runRadar(opts){
+        const {durationMs, numbers, winner} = opts;
+        const w = canvas.logicalWidth || canvas.clientWidth;
+        const h = canvas.logicalHeight || canvas.clientHeight;
+        const cx = w*0.5, cy = h*0.48;
+        const R = Math.min(w,h)*0.35; // 增加到 35%
+
+        const list = numbers.slice();
+        const n = list.length;
+        const winnerIdx = list.indexOf(winner);
+
+        const startA = Math.random()*Math.PI*2;
+        const winnerA = (winnerIdx / n) * Math.PI*2;
+
+        const extraTurns = (4 + Math.floor(Math.random()*2)) * Math.PI*2; // 4-5
+        const delta = normAngle(winnerA - startA);
+        const endA = startA + extraTurns + delta;
+
+        const particles = [];
+        let lastPingBucket = -1;
+
+        function frame(t){
+          clearStage();
+          const p = clamp(t/durationMs, 0, 1);
+          const e = easeOutExpo(p);
+          const sweep = startA + (endA - startA)*e;
+
+          // base grid rings
+          ctx.save();
+          ctx.translate(cx,cy);
+          ctx.strokeStyle = "rgba(255,255,255,.06)";
+          ctx.lineWidth = 1;
+          for(let i=1;i<=4;i++){
+            ctx.beginPath();
+            ctx.arc(0,0,R*(i/4),0,Math.PI*2);
+            ctx.stroke();
+          }
+          // crosshair
+          ctx.beginPath(); ctx.moveTo(-R,0); ctx.lineTo(R,0); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(0,-R); ctx.lineTo(0,R); ctx.stroke();
+
+          // points + numbers
+          for(let i=0;i<n;i++){
+            const a = (i/n) * Math.PI*2;
+            const rr = R*0.86;
+            const x = Math.cos(a)*rr;
+            const y = Math.sin(a)*rr;
+
+            // small pulse when sweep passes (bucketed)
+            const diff = normAngle(sweep - a);
+            const close = (diff < 0.06 || (Math.PI*2 - diff) < 0.06);
+
+            ctx.beginPath();
+            ctx.arc(x,y, 5.2, 0, Math.PI*2);
+            ctx.fillStyle = close ? "rgba(255,215,0,.85)" : "rgba(255,255,255,.28)";
+            ctx.fill();
+
+            ctx.font = "900 18px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+            ctx.fillStyle = "rgba(255,255,255,.80)";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(String(list[i]), x, y+10);
+          }
+
+          // sweep line + faint wedge
+          const wedge = 0.18;
+          ctx.save();
+          ctx.rotate(sweep);
+          // wedge
+          const grad = ctx.createRadialGradient(0,0,0,0,0,R);
+          grad.addColorStop(0,"rgba(255,215,0,.14)");
+          grad.addColorStop(1,"rgba(255,215,0,0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(0,0);
+          ctx.arc(0,0,R, -wedge, wedge);
+          ctx.closePath();
+          ctx.fill();
+
+          // line
+          ctx.strokeStyle = "rgba(255,215,0,.65)";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(0,0);
+          ctx.lineTo(R,0);
+          ctx.stroke();
+          ctx.restore();
+
+          // ping sound: when sweep crosses discrete angle buckets
+          const bucket = Math.floor((sweep % (Math.PI*2)) / (Math.PI*2) * n);
+          if(bucket !== lastPingBucket && p < 0.98){
+            lastPingBucket = bucket;
+            SoundFX.ping();
+          }
+
+          // lock on at end
+          if(p > 0.92){
+            const a = clamp((p-0.92)/0.08,0,1);
+            const aa = winnerA;
+            const rr = R*0.86;
+            const x = Math.cos(aa)*rr;
+            const y = Math.sin(aa)*rr;
+
+            ctx.save();
+            ctx.globalAlpha = 0.95*a;
+            ctx.strokeStyle = "rgba(255,215,0,.50)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x,y, 18 + (1-a)*10, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x,y, 32 + (1-a)*16, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          ctx.restore();
+
+          // end burst
+          if(p > 0.985 && particles.length === 0){
+            SoundFX.thump();
+            for(let i=0;i<90;i++){
+              const ang = Math.random()*Math.PI*2;
+              const sp = 200 + Math.random()*480;
+              particles.push(new Particle(cx, cy, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.65 + Math.random()*0.22, 2+Math.random()*2, "dust"));
+            }
+            particles.push(new Particle(cx,cy,0,0,0.45, R*0.55, "shock"));
+          }
+          if(particles.length){
+            const dt = 1/60;
+            for(let i=particles.length-1;i>=0;i--){
+              particles[i].step(dt);
+              particles[i].draw(ctx);
+              if(particles[i].life<=0) particles.splice(i,1);
+            }
+          }
+          
+          // Return completion status when animation done and particles cleared
+          if(p >= 1.0 && particles.length === 0){
+            // CRITICAL: Calculate which number the sweep is pointing at
+            // When animation completes, sweep = endA
+            // Find the closest number to the sweep angle
+            let closestIdx = 0;
+            let closestDist = Infinity;
+            for(let i = 0; i < n; i++){
+              const a = (i/n) * Math.PI*2;
+              // Calculate angular distance properly (handling wrap-around)
+              let diff = Math.abs(endA - a);
+              if(diff > Math.PI) diff = Math.PI*2 - diff;
+              if(diff < closestDist){
+                closestDist = diff;
+                closestIdx = i;
+              }
+            }
+            const displayedWinner = list[closestIdx];
+            return { done: true, winner: displayedWinner };
+          }
+          return { done: false };
+        }
+        return { frame };
+      }
+
+      // ---------------------------
+      // Slot animation (mechanical steps, no snap-jump)
+      // ---------------------------
+      function runSlot(opts){
+        const {durationMs, candidates, winner} = opts;
+        const w = canvas.logicalWidth || canvas.clientWidth;
+        const h = canvas.logicalHeight || canvas.clientHeight;
+        const cx = w*0.5, cy = h*0.50;
+
+        const reelW = Math.min(w*0.18, 220);
+        const reelH = Math.min(h*0.62, 480);
+        const gap = reelW*0.22;
+        const x0 = cx - reelW*1.5 - gap;
+        const y0 = cy - reelH/2;
+
+        const rows = 7;
+        const rowH = reelH / rows;
+        const centerRow = Math.floor(rows/2);
+        
+        // Delay after reels stop before showing winner (milliseconds)
+        const REEL_STOP_DELAY = 800;
+        
+        // Use candidates array instead of 1..N
+        const N = candidates.length;
+        const winnerIdx = candidates.indexOf(winner);
+
+        // Each reel has its own start step; all land on winner with same modulo.
+        function makeReel(){
+          const start = Math.floor(300 + Math.random()*600); // large steps
+          const extraTurns = Math.floor(9 + Math.random()*5); // 9-13 full cycles
+          const delta = ( winnerIdx - (start % N) + N ) % N;
+          const end = start + extraTurns*N + delta;
+          return { start, end };
+        }
+        const reels = [makeReel(), makeReel(), makeReel()];
+
+        // Reels stop sequentially (left → middle → right)
+        const stopT = [0.6, 0.75, 0.9];
+
+        const particles = [];
+
+        function numAtStep(step, rowIndex){
+          const base = Math.floor(step);
+          const idx = (base + (rowIndex - centerRow)) % N;
+          const v = (idx + N) % N;
+          return candidates[v];
+        }
+
+        function drawReel(i, t){
+          const rx = x0 + i*(reelW + gap);
+          const localT = clamp(t/stopT[i], 0, 1);
+          const e = easeOutBounce(localT);
+          let step = reels[i].start + (reels[i].end - reels[i].start)*e;
+          
+          // Lock to exact end value early to prevent visual jumping in final frames
+          // This ensures the winning number is displayed stably before animation completes
+          if(localT >= 0.98){
+            step = reels[i].end;
+          }
+          const isStopped = localT >= 1;
+
+          // window
+          ctx.save();
+          ctx.beginPath();
+          roundRect(ctx, rx, y0, reelW, reelH, 22);
+          ctx.fillStyle = "rgba(0,0,0,.22)";
+          ctx.fill();
+          ctx.strokeStyle = "rgba(255,215,0,.30)";
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.clip();
+
+          // background subtle stripes
+          ctx.fillStyle = "rgba(255,255,255,.03)";
+          for(let k=0;k<rows;k+=2){
+            ctx.fillRect(rx, y0 + k*rowH, reelW, rowH);
+          }
+
+          // motion blur: draw text multiple times with alpha (disabled when stopped)
+          const frac = isStopped ? 0 : (step - Math.floor(step));
+          const blurLayers = isStopped ? [0] : [-1, 0, 1]; // Only middle layer when stopped
+          for(let k of blurLayers){
+            const blurAlpha = (k===0?1:0.35);
+            for(let r=0;r<rows;r++){
+              const yy = y0 + r*rowH + rowH/2 + (k*frac*rowH*0.35);
+              const val = numAtStep(step, r);
+
+              const isCenter = (r===centerRow);
+              const font = isCenter ? 56 : 40;
+              ctx.font = (isCenter? "1000 ":"900 ") + font + "px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+              ctx.textAlign = "center";
+              ctx.textBaseline = "middle";
+              ctx.globalAlpha = blurAlpha * (isCenter ? 0.95 : 0.65);
+              ctx.fillStyle = isCenter ? "rgba(255,255,255,.96)" : "rgba(255,255,255,.78)";
+              ctx.fillText(String(val), rx + reelW/2, yy);
+            }
+          }
+
+          ctx.restore();
+
+          // center highlight line
+          ctx.save();
+          ctx.strokeStyle = "rgba(255,215,0,.40)";
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(rx, y0 + centerRow*rowH);
+          ctx.lineTo(rx+reelW, y0 + centerRow*rowH);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(rx, y0 + (centerRow+1)*rowH);
+          ctx.lineTo(rx+reelW, y0 + (centerRow+1)*rowH);
+          ctx.stroke();
+          ctx.restore();
+
+          // ding when reel stops (once)
+          if(localT >= 1 && !reels[i].stopped){
+            reels[i].stopped = true;
+            SoundFX.reelStop();
+          }
+        }
+
+        function frame(ms){
+          // Initialize persistent state on first call
+          if(!frame.lastSpinTime) frame.lastSpinTime = 0;
+          if(!frame.allReelsStopped) frame.allReelsStopped = false;
+          if(!frame.reelsStoppedTime) frame.reelsStoppedTime = 0;
+          
+          clearStage();
+          const p = clamp(ms/durationMs,0,1);
+
+          // Play spinning sound periodically while spinning
+          if(p < 0.95 && (ms - frame.lastSpinTime) > 150){
+            frame.lastSpinTime = ms;
+            SoundFX.slotSpin();
+          }
+
+          // Title
+          ctx.save();
+          ctx.font = "1000 40px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+          ctx.fillStyle = "rgba(255,255,255,.20)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText("紅包拉霸", w/2, 16);
+          ctx.restore();
+
+          // reels
+          drawReel(0,p);
+          drawReel(1,p);
+          drawReel(2,p);
+
+          // Check if all reels stopped and play jackpot sound
+          if(!frame.allReelsStopped && reels[0].stopped && reels[1].stopped && reels[2].stopped){
+            frame.allReelsStopped = true;
+            frame.reelsStoppedTime = ms;
+            SoundFX.jackpot();
+          }
+
+          // final lock border (subtle)
+          if(p > 0.92){
+            const a = clamp((p-0.92)/0.08,0,1);
+            ctx.save();
+            ctx.globalAlpha = 0.75*a;
+            ctx.strokeStyle = "rgba(255,215,0,.45)";
+            ctx.lineWidth = 6;
+            roundRect(ctx, x0-26, y0-26, (reelW*3+gap*2)+52, reelH+52, 32);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // burst at very end
+          if(p > 0.985 && particles.length === 0){
+            SoundFX.thump();
+            const bx = w/2, by = h/2;
+            for(let i=0;i<110;i++){
+              const ang = Math.random()*Math.PI*2;
+              const sp = 240 + Math.random()*560;
+              particles.push(new Particle(bx, by, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.70 + Math.random()*0.25, 2+Math.random()*2, "dust"));
+            }
+            particles.push(new Particle(bx,by,0,0,0.45, Math.min(w,h)*0.22, "shock"));
+          }
+          if(particles.length){
+            const dt = 1/60;
+            for(let i=particles.length-1;i>=0;i--){
+              particles[i].step(dt);
+              particles[i].draw(ctx);
+              if(particles[i].life<=0) particles.splice(i,1);
+            }
+          }
+          
+          // Return completion status when all reels stopped and particles done
+          // Add delay after reels stop for better UX (pause before winner reveal)
+          const canComplete = frame.allReelsStopped && frame.reelsStoppedTime > 0 && (ms - frame.reelsStoppedTime >= REEL_STOP_DELAY);
+          if(p >= 1.0 && particles.length === 0 && canComplete){
+            // CRITICAL: Return the actual displayed number from the stopped reel
+            // This ensures the winner matches what's shown on screen
+            const displayedWinner = numAtStep(reels[0].end, centerRow);
+            return { done: true, winner: displayedWinner };
+          }
+          return { done: false };
+        }
+
+        return { frame };
+      }
+
+      // ---------------------------
+      // Cards animation (face-up, smooth cursor)
+      // ---------------------------
+      function runCards(opts){
+        const {durationMs, numbers, winner} = opts;
+        const w = canvas.logicalWidth || canvas.clientWidth;
+        const h = canvas.logicalHeight || canvas.clientHeight;
+
+        const list = numbers.slice();
+        const n = list.length;
+        const winnerIdx = list.indexOf(winner);
+
+        // Layout grid in safe area with more padding
+        const pad = 40;
+        const area = {
+          x: pad, y: pad+30,
+          w: w - pad*2,
+          h: h - pad*2 - 60,
+        };
+
+        // Choose cols for 16:9 and readability
+        const targetCols = clamp(Math.ceil(Math.sqrt(n*1.1)), 6, 14);
+        let cols = targetCols;
+        let rows = Math.ceil(n/cols);
+
+        // adjust if too tall
+        const gap = 10;
+        let cardW = (area.w - gap*(cols-1)) / cols;
+        let cardH = cardW * 1.16;
+        while(rows*cardH + gap*(rows-1) > area.h && cols < 18){
+          cols += 1;
+          rows = Math.ceil(n/cols);
+          cardW = (area.w - gap*(cols-1)) / cols;
+          cardH = cardW * 1.16;
+        }
+        cardW = clamp(cardW, 70, 170);
+        cardH = clamp(cardH, 86, 200);
+
+        // Compute positions
+        const cards = [];
+        for(let i=0;i<n;i++){
+          const c = i % cols;
+          const r = Math.floor(i/cols);
+          const x = area.x + c*(cardW+gap);
+          const y = area.y + r*(cardH+gap);
+          cards.push({x,y,w:cardW,h:cardH, num:list[i]});
+        }
+
+        // Build cursor path (smooth movement), end at winner
+        const steps = 40;
+        const path = [];
+        let cur = Math.floor(Math.random()*n);
+        for(let i=0;i<steps-3;i++){
+          cur = Math.floor(Math.random()*n);
+          path.push(cur);
+        }
+        // two near-miss visits
+        const near1 = (winnerIdx + 1) % n;
+        const near2 = (winnerIdx + 2) % n;
+        path.push(near1);
+        path.push(near2);
+        path.push(winnerIdx);
+
+        const particles = [];
+        let lastCardIndex = -1;
+
+        function frame(ms){
+          clearStage();
+          const p = clamp(ms/durationMs,0,1);
+          const e = easeOutCubic(p);
+
+          // Title
+          ctx.save();
+          ctx.font = "1000 40px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+          ctx.fillStyle = "rgba(255,255,255,.20)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText("抽籤桌面", w/2, 16);
+          ctx.restore();
+
+          // Draw cards
+          for(let i=0;i<cards.length;i++){
+            const c = cards[i];
+            const isWin = (i===winnerIdx && p>0.94);
+            ctx.save();
+            // subtle shadow
+            ctx.fillStyle = "rgba(0,0,0,.22)";
+            roundRect(ctx, c.x, c.y+2, c.w, c.h, 18);
+            ctx.fill();
+
+            // card face
+            ctx.fillStyle = isWin ? "rgba(255,215,0,.18)" : "rgba(255,255,255,.07)";
+            ctx.strokeStyle = "rgba(255,215,0,.25)";
+            ctx.lineWidth = 1.5;
+            roundRect(ctx, c.x, c.y, c.w, c.h, 18);
+            ctx.fill(); ctx.stroke();
+
+            // number
+            const font = clamp(c.w*0.48, 22, 56);
+            ctx.font = "1000 " + font.toFixed(0) + "px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgba(255,255,255,.92)";
+            ctx.fillText(String(c.num), c.x + c.w/2, c.y + c.h/2);
+
+            ctx.restore();
+          }
+
+          // cursor position
+          const total = path.length - 1;
+          const pp = e * total;
+          const i0 = Math.floor(pp);
+          const tt = pp - i0;
+          const a = cards[path[Math.min(i0, total)]];
+          const b = cards[path[Math.min(i0+1, total)]];
+          const cx0 = a.x + a.w/2, cy0 = a.y + a.h/2;
+          const cx1 = b.x + b.w/2, cy1 = b.y + b.h/2;
+          const px = lerp(cx0, cx1, tt);
+          const py = lerp(cy0, cy1, tt);
+
+          // Play card flip sound when moving to a new card
+          if(i0 !== lastCardIndex && i0 < total){
+            lastCardIndex = i0;
+            SoundFX.cardFlip();
+          }
+
+          // Play selection sound on final card
+          if(i0 === total && lastCardIndex !== total){
+            lastCardIndex = total;
+            SoundFX.cardSelect();
+          }
+
+          // draw highlight frame
+          const frameW = cardW + 12;
+          const frameH = cardH + 12;
+          ctx.save();
+          ctx.translate(px - frameW/2, py - frameH/2);
+          ctx.strokeStyle = "rgba(255,215,0,.50)";
+          ctx.lineWidth = 5;
+          roundRect(ctx, 0, 0, frameW, frameH, 20);
+          ctx.stroke();
+          ctx.restore();
+
+          // lock effect
+          if(p > 0.94){
+            const aa = clamp((p-0.94)/0.06,0,1);
+            ctx.save();
+            ctx.globalAlpha = 0.95*aa;
+            ctx.strokeStyle = "rgba(255,215,0,.45)";
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(px, py, 44 + (1-aa)*18, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.restore();
+          }
+
+          // end burst
+          if(p > 0.985 && particles.length === 0){
+            SoundFX.thump();
+            for(let i=0;i<95;i++){
+              const ang = Math.random()*Math.PI*2;
+              const sp = 220 + Math.random()*520;
+              particles.push(new Particle(px, py, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.68 + Math.random()*0.24, 2+Math.random()*2, "dust"));
+            }
+            particles.push(new Particle(px,py,0,0,0.45, Math.min(w,h)*0.18, "shock"));
+          }
+          if(particles.length){
+            const dt = 1/60;
+            for(let i=particles.length-1;i>=0;i--){
+              particles[i].step(dt);
+              particles[i].draw(ctx);
+              if(particles[i].life<=0) particles.splice(i,1);
+            }
+          }
+          
+          // Return completion status when animation done and particles cleared
+          if(p >= 1.0 && particles.length === 0){
+            // CRITICAL: Return the card at the final cursor position
+            // The path ends at winnerIdx, so the displayed card is cards[winnerIdx]
+            const displayedWinner = cards[winnerIdx].num;
+            return { done: true, winner: displayedWinner };
+          }
+          return { done: false };
+        }
+
+        return { frame };
+      }
+
+      // ---------------------------
+      // Ball pool (collisions + sparks + explosion)
+      // ---------------------------
+      function runBalls(opts){
+        const {durationMs, numbers, winner} = opts;
+        const w = canvas.logicalWidth || canvas.clientWidth;
+        const h = canvas.logicalHeight || canvas.clientHeight;
+
+        // Physics area with more padding to prevent clipping
+        const pad = 40;
+        const area = {
+          x: pad, y: pad+30,
+          w: w - pad*2,
+          h: h - pad*2 - 60,
+        };
+
+        const list = numbers.slice();
+        const n = list.length;
+
+        const rBase = clamp(42 - Math.sqrt(n)*2.2, 18, 38);
+        const radius = rBase;
+
+        const balls = [];
+        const sparks = [];
+        const burst = [];
+        const exploded = []; // Track exploded balls for effects
+
+        // Build balls with random position and velocity
+        for(let i=0;i<n;i++){
+          const x = area.x + radius + Math.random()*(area.w - radius*2);
+          const y = area.y + radius + Math.random()*(area.h - radius*2);
+          const ang = Math.random()*Math.PI*2;
+          const sp = 120 + Math.random()*220;
+          balls.push({
+            num: list[i],
+            x, y,
+            vx: Math.cos(ang)*sp,
+            vy: Math.sin(ang)*sp,
+            r: radius,
+            isWinner: list[i] === winner,
+            alive: true,
+          });
+        }
+
+        // Spatial grid for collisions
+        const cellSize = radius * 2.4;
+        function cellKey(cx, cy){ return cx + "," + cy; }
+
+        function stepPhysics(dt, p){
+          // mild global drag
+          const drag = 0.10;
+
+          // vortex to make it lively (applies to all, no bias)
+          const vcx = area.x + area.w/2, vcy = area.y + area.h/2;
+
+          // winner attraction only near the end (lock phase)
+          const lockStart = 0.70; // Start protecting winner earlier
+          const lockP = p > lockStart ? (p-lockStart)/(1-lockStart) : 0;
+          const winPull = 0.0 + 1.0*lockP; // scales up to 1
+
+          // Count alive balls
+          const aliveBalls = balls.filter(b => b.alive);
+
+          // Update velocities & positions (only for alive balls)
+          for(const b of aliveBalls){
+            // swirl
+            const dx = b.x - vcx, dy = b.y - vcy;
+            const dist = Math.max(60, Math.hypot(dx,dy));
+            const swirl = 50; // px/s^2
+            const ax = (-dy/dist) * swirl;
+            const ay = ( dx/dist) * swirl;
+
+            b.vx += ax*dt;
+            b.vy += ay*dt;
+
+            // gentle centering
+            const cent = 18;
+            b.vx += (-dx/dist) * cent * dt;
+            b.vy += (-dy/dist) * cent * dt;
+
+            // winner magnet (only very late)
+            if(b.isWinner && lockP>0){
+              const mx = vcx - b.x;
+              const my = vcy - b.y;
+              const md = Math.max(20, Math.hypot(mx,my));
+              const mag = 520 * winPull;
+              b.vx += (mx/md)*mag*dt;
+              b.vy += (my/md)*mag*dt;
+            }
+
+            // drag
+            b.vx *= (1 - drag*dt);
+            b.vy *= (1 - drag*dt);
+
+            // integrate
+            b.x += b.vx*dt;
+            b.y += b.vy*dt;
+
+            // walls
+            if(b.x < area.x + b.r){ b.x = area.x + b.r; b.vx *= -0.92; }
+            if(b.x > area.x + area.w - b.r){ b.x = area.x + area.w - b.r; b.vx *= -0.92; }
+            if(b.y < area.y + b.r){ b.y = area.y + b.r; b.vy *= -0.92; }
+            if(b.y > area.y + area.h - b.r){ b.y = area.y + area.h - b.r; b.vy *= -0.92; }
+          }
+
+          // Build grid (only alive balls)
+          const grid = new Map();
+          for(let i=0;i<balls.length;i++){
+            const b = balls[i];
+            if(!b.alive) continue;
+            const cx = Math.floor((b.x - area.x)/cellSize);
+            const cy = Math.floor((b.y - area.y)/cellSize);
+            const key = cellKey(cx,cy);
+            if(!grid.has(key)) grid.set(key, []);
+            grid.get(key).push(i);
+          }
+
+          // Collisions with explosion logic
+          const collisionPhase = p < 0.92; // Extend collision phase closer to end
+          const dirs = [
+            [0,0],[1,0],[-1,0],[0,1],[0,-1],
+            [1,1],[1,-1],[-1,1],[-1,-1]
+          ];
+          for(const [key, idxs] of grid.entries()){
+            const parts = key.split(",");
+            const cx = parseInt(parts[0],10);
+            const cy = parseInt(parts[1],10);
+
+            for(const [dx,dy] of dirs){
+              const nkey = cellKey(cx+dx, cy+dy);
+              const jdxs = grid.get(nkey);
+              if(!jdxs) continue;
+
+              for(const i of idxs){
+                for(const j of jdxs){
+                  if(j <= i) continue;
+                  const a = balls[i], b = balls[j];
+                  if(!a.alive || !b.alive) continue;
+                  
+                  const dx = b.x - a.x;
+                  const dy = b.y - a.y;
+                  const dist = Math.hypot(dx,dy);
+                  const minD = a.r + b.r;
+                  if(dist > 0 && dist < minD){
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+                    const overlap = (minD - dist);
+
+                    // separate
+                    a.x -= nx * overlap * 0.5;
+                    a.y -= ny * overlap * 0.5;
+                    b.x += nx * overlap * 0.5;
+                    b.y += ny * overlap * 0.5;
+
+                    // relative velocity
+                    const rvx = b.vx - a.vx;
+                    const rvy = b.vy - a.vy;
+                    const vn = rvx*nx + rvy*ny;
+                    if(vn < 0){
+                      const restitution = 0.92;
+                      const impulse = -(1+restitution)*vn*0.5; // equal mass
+                      a.vx -= impulse*nx;
+                      a.vy -= impulse*ny;
+                      b.vx += impulse*nx;
+                      b.vy += impulse*ny;
+
+                      // Ball explosion logic (collision phase only)
+                      const speed = Math.abs(vn);
+                      const aliveCount = aliveBalls.length;
+                      
+                      // Lower speed threshold when fewer balls remain
+                      const speedThreshold = aliveCount <= 5 ? 80 : 160;
+                      
+                      if(collisionPhase && aliveCount > 1 && speed > speedThreshold){
+                        // Decide which ball explodes (never the winner if protected)
+                        let toExplode = null;
+                        
+                        // If in lock phase, never explode winner
+                        if(lockP > 0){
+                          if(!a.isWinner && b.isWinner){
+                            toExplode = a;
+                          } else if(a.isWinner && !b.isWinner){
+                            toExplode = b;
+                          } else if(!a.isWinner && !b.isWinner){
+                            toExplode = Math.random() < 0.5 ? a : b;
+                          }
+                        } else {
+                          // Before lock phase, higher chance to explode when few balls remain
+                          const explodeChance = aliveCount <= 5 ? 0.40 : 0.25; // 40% when ≤5 balls, 25% otherwise
+                          if(Math.random() < explodeChance){
+                            toExplode = Math.random() < 0.5 ? a : b;
+                          }
+                        }
+
+                        // Explode the chosen ball
+                        if(toExplode && toExplode.alive){
+                          toExplode.alive = false;
+                          SoundFX.thump();  // Explosion sound effect
+                          
+                          // Create explosion particles
+                          const ex = toExplode.x, ey = toExplode.y;
+                          for(let k=0;k<20;k++){
+                            const ang = Math.random()*Math.PI*2;
+                            const sp = 180 + Math.random()*400;
+                            burst.push(new Particle(ex, ey, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.5 + Math.random()*0.3, 2.5+Math.random()*2, "dust"));
+                          }
+                          // Shockwave
+                          burst.push(new Particle(ex, ey, 0, 0, 0.35, toExplode.r*1.8, "shock"));
+                        }
+                      }
+
+                      // sparks on hard hits
+                      if(speed > 180 && sparks.length < 120){
+                        const sx = (a.x+b.x)/2;
+                        const sy = (a.y+b.y)/2;
+                        for(let k=0;k<2;k++){
+                          const ang = Math.random()*Math.PI*2;
+                          const sp = 140 + Math.random()*260;
+                          sparks.push(new Particle(sx,sy, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.26 + Math.random()*0.15, 1.8+Math.random()*1.2, "spark"));
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+
+          // Step sparks
+          for(let i=sparks.length-1;i>=0;i--){
+            sparks[i].step(dt);
+            if(sparks[i].life<=0) sparks.splice(i,1);
+          }
+          for(let i=burst.length-1;i>=0;i--){
+            burst[i].step(dt);
+            if(burst[i].life<=0) burst.splice(i,1);
+          }
+        }
+
+        function draw(p){
+          clearStage();
+
+          // Title
+          ctx.save();
+          ctx.font = "1000 40px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+          ctx.fillStyle = "rgba(255,255,255,.20)";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "top";
+          ctx.fillText("福袋球池", w/2, 16);
+          ctx.restore();
+
+          // Draw balls (only alive ones)
+          for(const b of balls){
+            if(!b.alive) continue;
+            
+            // base fill (festive red) + gold rim
+            ctx.save();
+
+            // soft shadow
+            ctx.fillStyle = "rgba(0,0,0,.25)";
+            ctx.beginPath();
+            ctx.ellipse(b.x, b.y + b.r*0.55, b.r*0.92, b.r*0.45, 0, 0, Math.PI*2);
+            ctx.fill();
+
+            // ball
+            ctx.beginPath();
+            ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+            ctx.fillStyle = "rgba(212,35,42,.45)";
+            ctx.fill();
+
+            // rim
+            ctx.strokeStyle = "rgba(255,215,0,.35)";
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // tiny highlight
+            ctx.beginPath();
+            ctx.arc(b.x - b.r*0.30, b.y - b.r*0.30, b.r*0.26, 0, Math.PI*2);
+            ctx.fillStyle = "rgba(255,255,255,.10)";
+            ctx.fill();
+
+            // number
+            const fs = clamp(b.r*1.05, 18, 44);
+            ctx.font = "1000 " + fs.toFixed(0) + "px system-ui, -apple-system, 'PingFang TC', 'Noto Sans TC', sans-serif";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = "rgba(255,255,255,.96)";
+            ctx.fillText(String(b.num), b.x, b.y+1);
+
+            // lock ring near end (winner only)
+            if(b.isWinner && p > 0.86){
+              const a = clamp((p-0.86)/0.14,0,1);
+              ctx.globalAlpha = 0.95*a;
+              ctx.strokeStyle = "rgba(255,215,0,.55)";
+              ctx.lineWidth = 3.5;
+              ctx.beginPath();
+              ctx.arc(b.x,b.y, b.r+10 + (1-a)*8, 0, Math.PI*2);
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+
+            ctx.restore();
+          }
+
+          // Sparks
+          for(const s of sparks) s.draw(ctx);
+
+          // Burst
+          for(const pz of burst) pz.draw(ctx);
+        }
+
+        let didBurst = false;
+        let animationComplete = false;
+
+        function frame(ms){
+          // Check if only one ball remains (event-driven completion)
+          const aliveBalls = balls.filter(b => b.alive);
+          
+          // Use time-based progress for physics, but don't end early
+          const p = clamp(ms/durationMs,0,1);
+
+          // multiple physics substeps for stability
+          const dt = 1/60;
+          const sub = 2;
+          for(let k=0;k<sub;k++){
+            stepPhysics(dt/sub, p);
+          }
+
+          // Auto-explosion mechanism: periodically explode non-winner balls
+          if(!frame.lastPopTime) frame.lastPopTime = 0;
+          const popInterval = 400; // milliseconds between explosions
+
+          if(ms - frame.lastPopTime > popInterval && aliveBalls.length > 1){
+            frame.lastPopTime = ms;
+            // Find all non-winner alive balls
+            const nonWinnerBalls = aliveBalls.filter(b => !b.isWinner);
+            if(nonWinnerBalls.length > 0){
+              // Randomly select one to explode
+              const idx = Math.floor(Math.random() * nonWinnerBalls.length);
+              const ballToPop = nonWinnerBalls[idx];
+              ballToPop.alive = false;
+              // Create explosion particle effect
+              SoundFX.thump();
+              for(let i=0; i<20; i++){
+                const ang = Math.random()*Math.PI*2;
+                const sp = 150 + Math.random()*300;
+                sparks.push(new Particle(ballToPop.x, ballToPop.y, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.5, 2, "dust"));
+              }
+            }
+          }
+
+          // Final celebration burst when only one ball remains
+          if(aliveBalls.length === 1 && !didBurst){
+            didBurst = true;
+            SoundFX.fanfare();
+            // The last alive ball is the winner
+            const win = aliveBalls[0];
+            const bx = win.x, by = win.y;
+            for(let i=0;i<180;i++){
+              const ang = Math.random()*Math.PI*2;
+              const sp = 280 + Math.random()*820;
+              burst.push(new Particle(bx, by, Math.cos(ang)*sp, Math.sin(ang)*sp, 0.90 + Math.random()*0.30, 2.5+Math.random()*2.5, "dust"));
+            }
+            burst.push(new Particle(bx,by,0,0,0.60, Math.min(w,h)*0.25, "shock"));
+            
+            // Mark animation as complete after a short delay for effect visibility
+            setTimeout(() => { animationComplete = true; }, 800);
+          }
+
+          draw(p);
+          
+          // Return completion state
+          if(animationComplete) {
+            // Return the surviving ball's number as winner to ensure fairness
+            // The original winner ball should survive due to protection logic in collision/explosion code
+            // Fallback to original winner if no balls survive (should not happen in normal operation)
+            const lastAliveBall = aliveBalls.length > 0 ? aliveBalls[0] : null;
+            const actualWinner = lastAliveBall ? lastAliveBall.num : winner;
+            return { done: true, winner: actualWinner };
+          }
+          return { done: false };
+        }
+
+        return { frame };
+      }
+
+      // ---------------------------
+      // Animation runner (rAF)
+      // ---------------------------
+      let activeAnim = null;
+      let animStart = 0;
+      let animDuration = 10000;  // Increased from 6500ms to allow natural deceleration
+      let animResolve = null;
+      let currentAnimMode = null;
+
+      function startAnimation(mode, winner, displayNumbers){
+        currentAnimMode = mode;
+        resizeCanvas();  // Ensure canvas dimensions are correct before starting animation
+        
+        // Build options
+        const opts = {
+          durationMs: animDuration,
+          numbers: displayNumbers,
+          N: state.participantsN,
+          winner: winner,
+        };
+
+        // Create animator
+        if(mode === "wheel") activeAnim = runWheel(opts);
+        else if(mode === "radar") activeAnim = runRadar(opts);
+        else if(mode === "slot") activeAnim = runSlot({durationMs:animDuration, candidates: displayNumbers, winner:winner});
+        else if(mode === "cards") activeAnim = runCards(opts);
+        else activeAnim = runBalls(opts);
+
+        animStart = now();
+
+        return new Promise((resolve)=>{
+          animResolve = resolve;
+          requestAnimationFrame(loop);
+        });
+      }
+
+      function loop(){
+        if(!activeAnim) return;
+        const t = now() - animStart;
+        const result = activeAnim.frame(t);
+
+        // Check if animation reports it's done (state-based completion)
+        if(result && result.done){
+          currentAnimMode = null;
+          const done = animResolve;
+          activeAnim = null;
+          animResolve = null;
+          // CRITICAL FIX: Pass the actual displayed winner from animation result
+          // This ensures the winner matches what's shown on screen
+          // Passes result.winner (which may be undefined) to be handled by doDraw()
+          if(done) done(result.winner);
+          return;
+        }
+
+        // Ball pool animation is event-based, but with safety timeout
+        if(currentAnimMode === 'balls'){
+          // Safety timeout: if animation runs longer than 2 minutes, force completion
+          if(t >= 120000){
+            currentAnimMode = null;
+            const done = animResolve;
+            activeAnim = null;
+            animResolve = null;
+            if(done) done();
+            return;
+          }
+          requestAnimationFrame(loop);
+          return;
+        }
+
+        // Fallback to time-based completion for other animations
+        if(t >= animDuration){
+          currentAnimMode = null;
+          const done = animResolve;
+          activeAnim = null;
+          animResolve = null;
+          if(done) done();
+          return;
+        }
+        requestAnimationFrame(loop);
+      }
+
+      // ---------------------------
+      // Draw flow
+      // ---------------------------
+      function buildDisplayNumbers(winner){
+        // For visual variety, shuffle order each draw
+        const display = state.candidates.slice();
+        display.push(winner);
+        shuffleInPlace(display);
+        return display;
+      }
+
+      // Show winner result with celebration
+      function showWinnerResult(winner, prize){
+        return new Promise((resolve) => {
+          ui.resultNumber.textContent = "#" + winner;
+          ui.resultPrize.textContent = prize.name;
+          ui.winnerResult.classList.add("show");
+          
+          SoundFX.fanfare();
+          
+          // Hide after 3.5 seconds
+          setTimeout(() => {
+            ui.winnerResult.classList.remove("show");
+            setTimeout(resolve, 400); // Wait for fade out
+          }, 3500);
+        });
+      }
+
+      // Show prize introduction screen
+      function showPrizeIntro(prize){
+        return new Promise((resolve) => {
+          const drawNo = prizeDrawNo(prize);
+          ui.introTitle.textContent = prize.name;
+          ui.introProgress.textContent = `第 ${drawNo} 位 / 共 ${prize.total} 位`;
+          ui.prizeIntro.classList.add("show");
+          state.phase = 'prizeIntro';
+          
+          // Button click or space key to continue
+          const onContinue = () => {
+            SoundFX.click();
+            ui.prizeIntro.classList.remove("show");
+            state.phase = 'rolling';
+            ui.btnStartDraw.removeEventListener("click", onContinue);
+            document.removeEventListener("keydown", onKeydown);
+            setTimeout(resolve, 300);
+          };
+          
+          const onKeydown = (e) => {
+            if(e.code === "Space" && !isTypingTarget(e.target)){
+              e.preventDefault();
+              onContinue();
+            }
+          };
+          
+          ui.btnStartDraw.addEventListener("click", onContinue);
+          document.addEventListener("keydown", onKeydown);
+        });
+      }
+
+      async function doDraw(){
+        if(state.isRolling || state.phase !== 'idle') return;
+
+        const prize = getCurrentPrize();
+        if(!prize){
+          ui.winnerBig.textContent = "獎項已抽完";
+          ui.winnerSmall.textContent = "";
+          renderTopUI();
+          return;
+        }
+        if(state.candidates.length <= 0){
+          ui.winnerBig.textContent = "抽獎池已空";
+          ui.winnerSmall.textContent = "按 A → 重新設定參加人數";
+          renderTopUI();
+          return;
+        }
+
+        state.isRolling = true;
+        renderTopUI();
+
+        // Show prize introduction first
+        await showPrizeIntro(prize);
+
+        // pick winner uniformly
+        const idx = Math.floor(Math.random()*state.candidates.length);
+        const winner = state.candidates.splice(idx,1)[0];
+
+        // update reveal to "rolling"
+        ui.winnerBig.textContent = "抽獎中…";
+        ui.winnerSmall.textContent = prize.name + "（第 " + prizeDrawNo(prize) + " 位）";
+
+        // mode
+        const mode = pickMode(prize);
+        state.lastMode = mode;
+
+        // start animation
+        const displayNumbers = buildDisplayNumbers(winner);
+        // CRITICAL FIX: Capture the actual displayed winner from animation
+        // If animation returns a winner, use it; otherwise fall back to pre-selected winner
+        const displayedWinner = await startAnimation(mode, winner, displayNumbers);
+        const actualWinner = displayedWinner ?? winner;
+
+        // Show winner result overlay with celebration
+        await showWinnerResult(actualWinner, prize);
+
+        // reveal winner in bottom bar
+        ui.winnerBig.textContent = "#" + actualWinner;
+        ui.winnerSmall.textContent = prize.name;
+
+        // Play cheer sound for second prize or grand prize
+        if(prize.key === "second" || prize.key === "grand"){
+          setTimeout(() => SoundFX.cheer(), 200);
+        }
+
+        // record history
+        const rec = {
+          number: actualWinner,
+          prizeKey: prize.key,
+          prizeName: prize.name,
+          prizeIndex: state.currentPrizeIndex,
+          drawNo: prizeDrawNo(prize),
+          time: Date.now()
+        };
+        state.history.push(rec);
+
+        // consume prize
+        prize.remaining = Math.max(0, prize.remaining - 1);
+
+        // if current prize ended, advance (getCurrentPrize will move)
+        if(prize.remaining === 0){
+          state.currentPrizeIndex = Math.min(state.currentPrizeIndex + 1, state.prizes.length-1);
+        }
+
+        state.isRolling = false;
+        state.phase = 'idle';
+        renderAll();
+      }
+
+      // ---------------------------
+      // Redraw last
+      // ---------------------------
+      function redrawLast(){
+        if(state.isRolling) return;
+        if(state.history.length === 0) return;
+
+        const last = state.history.pop();
+
+        // put number back to pool if not already there
+        if(state.candidates.indexOf(last.number) === -1){
+          state.candidates.push(last.number);
+        }
+
+        // restore prize remaining
+        const prize = state.prizes[last.prizeIndex] || state.prizes.find(p=>p.key===last.prizeKey);
+        if(prize){
+          prize.remaining = Math.min(prize.total, prize.remaining + 1);
+          // also ensure current prize pointer goes back if needed
+          state.currentPrizeIndex = Math.min(state.currentPrizeIndex, last.prizeIndex);
+        }
+
+        ui.winnerBig.textContent = "已重抽撤回";
+        ui.winnerSmall.textContent = "上一位已加回抽獎池，請重新抽一次";
+        renderAll();
+      }
+
+      // ---------------------------
+      // Add surprise (increment)
+      // ---------------------------
+      function addSurpriseOne(){
+        const sp = state.prizes.find(p=>p.key==="surprise");
+        if(sp){
+          sp.total += 1;
+          sp.remaining += 1;
+          // If everything else is finished, ensure we can draw
+          if(!getCurrentPrize()){
+            state.currentPrizeIndex = state.prizes.indexOf(sp);
+          }
+        }else{
+          // Shouldn't happen; but keep safe
+          state.prizes.push({key:"surprise", name:"加碼驚喜", total:1, remaining:1});
+          state.currentPrizeIndex = state.prizes.length-1;
+        }
+
+        ui.winnerBig.textContent = "已追加加碼";
+        ui.winnerSmall.textContent = "加碼驚喜 +1 位";
+        renderAll();
+      }
+
+      // ---------------------------
+      // Admin open/close
+      // ---------------------------
+      function toggleAdmin(){
+        const open = ui.admin.classList.toggle("open");
+        ui.admin.setAttribute("aria-hidden", open ? "false" : "true");
+        renderAll();
+      }
+
+      // ---------------------------
+      // Fullscreen
+      // ---------------------------
+      async function goFullscreen(){
+        const el = document.documentElement;
+        try{
+          if(!document.fullscreenElement){
+            await el.requestFullscreen();
+          }else{
+            await document.exitFullscreen();
+          }
+        }catch(e){}
+        resizeCanvas();
+      }
+
+      // ---------------------------
+      // Bind events
+      // ---------------------------
+      ui.btnDraw.addEventListener("click", ()=>{
+        SoundFX.setEnabled(ui.soundToggle.checked);
+        SoundFX.click();
+        doDraw();
+      });
+
+      ui.btnFullscreen.addEventListener("click", ()=>{
+        SoundFX.setEnabled(ui.soundToggle.checked);
+        SoundFX.click();
+        goFullscreen();
+      });
+
+      ui.soundToggle.addEventListener("change", ()=>{
+        SoundFX.setEnabled(ui.soundToggle.checked);
+      });
+
+      ui.applyParticipants.addEventListener("click", ()=>{
+        SoundFX.click();
+        const v = parseInt(ui.participantsInput.value, 10);
+        if(!isFinite(v) || v < 1) return;
+        state.participantsN = v;
+        resetAll(); // forced reset as requested
+      });
+
+      ui.resetAll.addEventListener("click", ()=>{
+        SoundFX.click();
+        resetAll();
+      });
+
+      ui.addSurprise.addEventListener("click", ()=>{
+        SoundFX.click();
+        addSurpriseOne();
+      });
+
+      ui.redrawLast.addEventListener("click", ()=>{
+        SoundFX.click();
+        redrawLast();
+      });
+
+      document.addEventListener("keydown", (e)=>{
+        if(isTypingTarget(e.target)) return;
+
+        // A toggles admin
+        if(e.key === "a" || e.key === "A"){
+          e.preventDefault();
+          toggleAdmin();
+          return;
+        }
+
+        // Space to draw (must work cross browsers)
+        const isSpace = (e.code === "Space") || (e.key === " ") || (e.key === "Spacebar") || (e.keyCode === 32);
+        if(isSpace){
+          e.preventDefault();
+          SoundFX.setEnabled(ui.soundToggle.checked);
+          doDraw();
+          return;
+        }
+
+        // Esc close admin
+        if(e.key === "Escape"){
+          if(ui.admin.classList.contains("open")){
+            e.preventDefault();
+            toggleAdmin();
+          }
+        }
+      }, {passive:false});
+
+      // ---------------------------
+      // Initial
+      // ---------------------------
+      function renderEmptyCanvas(){
+        clearStage();
+      }
+
+      function init(){
+        // default participants N
+        state.participantsN = 20;
+        resetAll();
+        renderEmptyCanvas();
+        // Enable sound by default if checkbox is checked
+        SoundFX.setEnabled(ui.soundToggle.checked);
+      }
+
+      // Avoid autoplay AudioContext issues: only enable on user gesture
+      ui.winnerSmall.textContent = "";
+      init();
+
+      // Auto-open admin panel on page load
+      ui.admin.classList.add('open');
+      ui.participantsInput.focus();
+
+      // ensure re-render on visibility changes
+      document.addEventListener("visibilitychange", ()=>{
+        resizeCanvas();
+      });
+
+      // expose small debug if needed
+      window.__CNY_LOTTERY__ = { state: state };
+    })();
+  </script>
+</body>
+</html>
